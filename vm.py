@@ -55,8 +55,8 @@ def disassemble1(insn):
         if op == 1: return 'M[%d] + M[%d]' % (r1, r2)
         if op == 2: return 'M[%d] - M[%d]' % (r1, r2)
         if op == 3: return 'M[%d] * M[%d]' % (r1, r2)
+        if op == 5: return 'M[%d] / M[%d]' % (r1, r2)
         if op == 4: return 'write %d <- M[%d]' % (r1, r2)
-        if op == 5: return 'M[%d] + M[%d]' % (r1, r2)
         if op == 6: return 'status ? M[%d] : M[%d]' % (r1, r2)
     assert False
 
@@ -107,9 +107,9 @@ def d_insn(pc, insn):
     elif op == 3:
         update(pc, get(r1) * get(r2))
     elif op == 4:
-        output(r1, get(r2))
-    elif op == 5:
         update(pc, get(r1) / get(r2) if get(r2) != 0.0 else 0.0)
+    elif op == 5:
+        output(r1, get(r2))
     elif op == 6:
         update(pc, get(r1) if status else get(r2))
     else:
