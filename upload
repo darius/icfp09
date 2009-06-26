@@ -1,0 +1,3 @@
+#!/bin/sh
+clean
+scp * shell.accesscom.com:www/tmp/icfp/.
