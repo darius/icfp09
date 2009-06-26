@@ -1,5 +1,6 @@
 import math
 import struct
+import sys
 
 def read_uint(f):
     chars = f.read(4)
@@ -151,5 +152,9 @@ def input(actuator):
     assert False
 
 if __name__ == '__main__':
+
 #    disassemble()
+
+    assert 2 == len(sys.argv)
+    scenario = float(sys.argv[1])
     step()
