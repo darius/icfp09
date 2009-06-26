@@ -1,3 +1,4 @@
+import math
 import struct
 
 def read_uint(f):
@@ -61,8 +62,94 @@ def disassemble1(insn):
 
 def disassemble():
     for addr, insn in enumerate(insns):
-        print ('%5d %10g %-30s %08x'
-               % (addr, data[addr], disassemble1(insn), insn))
+        show(addr, insn)
+
+def show(addr, insn):
+    print ('%5d %10g %-30s %08x'
+           % (addr, data[addr], disassemble1(insn), insn))
+
+scenario = 1001.0
+
+# Sensor ports
+s_score, s_fuel, s_sx, s_sy, s_tx, s_ty = range(6)
+
+# Actuator ports
+a_dvx, a_dvy, a_config = 2, 3, 0x3E80
+
+status = False
+
+def step():
+    for pc, insn in enumerate(insns):
+        show(pc, insn)
+        sd, _, __, ___ = decode(insn)
+        if sd == 'S':
+            s_insn(pc, insn)
+        elif sd == 'D':
+            d_insn(pc, insn)
+        else:
+            assert False
+
+def get(addr):
+    if addr < len(data):
+        return data[addr]
+    return 0.0
+
+def update(pc, value):
+    data[pc] = value
+    print 'set %d = %g' % (pc, value)
+
+def d_insn(pc, insn):
+    _, op, r1, r2 = decode(insn)
+    if op == 1:
+        update(pc, get(r1) + get(r2))
+    elif op == 2:
+        update(pc, get(r1) - get(r2))
+    elif op == 3:
+        update(pc, get(r1) * get(r2))
+    elif op == 4:
+        output(r1, get(r2))
+    elif op == 5:
+        update(pc, get(r1) / get(r2) if get(r2) != 0.0 else 0.0)
+    elif op == 6:
+        update(pc, get(r1) if status else get(r2))
+    else:
+        assert False
+
+def s_insn(pc, insn):
+    _, op, imm, r1 = decode(insn)
+    if op == 0:
+        return
+    m = get(r1)
+    if op == 1:
+        global status
+        cmpi = field(insn, 23, 20)
+        if   cmpi == 0: status = (m <  0.0)
+        elif cmpi == 1: status = (m <= 0.0)
+        elif cmpi == 2: status = (m == 0.0)
+        elif cmpi == 3: status = (m >= 0.0)
+        elif cmpi == 4: status = (m >  0.0)
+        else: assert False
+    elif op == 2:
+        update(pc, math.sqrt(m))
+    elif op == 3:
+        update(pc, m)
+    elif op == 4:
+        update(pc, input(r1))
+    else:
+        assert False
+
+def output(sensor, value):
+    print 'sensor %d <- %g' % (sensor, value)
+
+def input(actuator):
+    if actuator == a_dvx:
+        return 0.0
+    if actuator == a_dvy:
+        return 0.0
+    if actuator == a_config:
+        return scenario
+    assert False
 
 if __name__ == '__main__':
-    disassemble()
+#    disassemble()
+    step()
