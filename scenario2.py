@@ -1,4 +1,4 @@
-from math import atan2, cos, hypot, pi, sin, sqrt
+from math import acos, atan2, cos, hypot, pi, sin, sqrt
 import sys
 
 import vm
@@ -21,7 +21,7 @@ def run_it(scenario):
     # Before trying to solve the scenario, let's just check that the
     # initial orbits are circular, as promised:
     def watch():
-        set_dv((0.0, 0.0))
+        set_dv((0., 0.))
         t = None
         for i in range(100):
             m.step()
@@ -34,11 +34,13 @@ def run_it(scenario):
     def show():
         r = my_position()
         t = get_target()
-        print ('%d\tr %g\ta %g\tt %g\ta %g'
-               % (m.nsteps, magnitude(r), angle(r), magnitude(t), angle(t)))
+        print ('%5d   %10.2f %10.f\n        %10.2f %10.2f\n        %10.2f %10.2f'
+               % (m.nsteps, r[0], r[1], t[0]-r[0], t[1]-r[1], t[0], t[1]))
+#        print ('%d\tr %g\ta %g\tt %g\ta %g'
+#               % (m.nsteps, magnitude(r), angle(r), magnitude(t), angle(t)))
 
     def run():
-        set_dv((0.0, 0.0))
+        set_dv((0., 0.))
         m.step()
         r0 = my_position()
         t0 = get_target()
@@ -48,6 +50,7 @@ def run_it(scenario):
         clockwise = (cross(r0, r1) < 0)
         omega = relative_angle(t0, t1) # angular velocity of target
         print 'omega', omega
+
         dv, dv_prime, T = calculate_burn()
         while not propitious(omega, T):
             m.step()
@@ -55,60 +58,84 @@ def run_it(scenario):
             if 50000 < m.nsteps:
                 print 'Giving up'
                 return
+        prev_r = my_position()
         burn(tangent(dv, clockwise))
         print 'Burned'
         show()
-        set_dv((0.0, 0.0))
-        for i in range(int(T) - 1): # XXX assumes 1 <= T
+
+        set_dv((0., 0.))
+        tmp = my_next_position(my_velocity(prev_r, (0.,0.)))
+        fudge = 16  # or 0 for 2002
+        for i in range(int(T) - fudge): # XXX
             prev_r = my_position()
+            next_target = rotate(get_target(), omega)
             m.step()
             show()
-            tmp = my_next_position(my_velocity(prev_r, (0.0,0.0)))
-            print 'Estimated next r', magnitude(tmp), angle(tmp)
-        v = my_velocity(prev_r, (0.0,0.0))
-        prev_r = my_position()
-        v_corr = course_correction(omega, v)
-        burn(v_corr)
-        circularize(clockwise, my_velocity(prev_r, v_corr))
-        print 'Inserted'
+            #print 'My discrepancy', vsub(tmp, my_position())
+            #print 'Target relative discrepancy', (magnitude(vsub(next_target, get_target())) / magnitude(get_target()))
+            tmp = my_next_position(my_velocity(prev_r, (0.,0.)))
+            #print 'Estimated next r', magnitude(tmp), angle(tmp)
+
+        B0, B1 = compute_insertion(clockwise, omega, prev_r)
+        print 'Insertion burns'
+        burn(B0)
         show()
-        set_dv((0.0, 0.0))
-        m.step()
+        prev_t = get_target()
+        burn(B1)
+        show()
+
+        print 'Inserted'
+        print 'rt actual', get_target()
+        print 'rv actual', infer_v(prev_t, (0.,0.), get_target())
+        show()
+        print 'Initial separation', magnitude(vsub(my_position(), get_target()))
+
+        set_dv((0., 0.))
         for i in range(1000): m.step()
         print 'Score', get_score()
         show()
+        print 'Final separation', magnitude(vsub(my_position(), get_target()))
 
-    def course_correction(omega, v):
-        next_r = my_next_position(v)
-        next_t = rotate(get_target(), omega)
-        return vsub(next_t, next_r)
+    def compute_insertion(clockwise, omega, prev_r):
+        r0 = my_position()
+        v0 = my_velocity(prev_r, (0.,0.))
+        rt = rotate(get_target(), 2 * omega)
+        speed = sqrt(GM / magnitude(get_target()))
+        vt = tangent_from(rt, speed, clockwise)
+        print 'rt', rt
+        print 'vt', vt
+        return compute_rendezvous(r0, v0, rt, vt)
 
-    def circularize(clockwise, v_current):
-        # Calculate and perform a circular-orbit insertion at the
-        # current radius. The idea: get our target velocity vector
-        # and subtract our current velocity.
-        speed = sqrt(GM / my_radius())
-        v_wanted = tangent(speed, clockwise)
-        burn(vsub(v_wanted, v_current))
+    def compute_rendezvous(r0, v0, rt, vt):
+        """Compute two successive burns that take us from the state
+        (r0, v0) to the state (rt, vt) (approximately)."""
+        U = vsub(rt, vadd(r0, vscale(2., vadd(v0, gravity(r0)))))
+        V = vsub(vt, vadd(v0, vscale(2., gravity(r0))))
+        B0 = vsub(U, vscale(0.5, V))
+        B1 = vsub(vscale(1.5, V), U)
+        return B0, B1
 
     def my_next_position(v):
-        # XXX not quite consonant with the spec:
-        r = my_position()
-        a = gravity_accel(r)
-        next_r = vadd(r, vadd(v, vscale(0.5, a)))
-        return next_r
+        rn, vn = tick(my_position(), v, (0.,0.))
+        return rn
 
-    def gravity_accel(r):
+    def gravity(r):
         return vscale(-GM / magnitude(r)**3, r)
 
     def my_velocity(prev_r, prev_burn):
-        # XXX not quite consonant with the spec:
-        #r = prev_r + prev_v + 0.5 * (prev_burn + gravity_accel(prev_r))
-        #prev_v = r - prev_r - 0.5 * (prev_burn + gravity_accel(prev_r))
-        #v = prev_v + prev_burn + gravity_accel(prev_r)
-        #v      = r - prev_r + 0.5 * (prev_burn + gravity_accel(prev_r))
-        a = vadd(prev_burn, gravity_accel(prev_r))
-        return vadd(vsub(my_position(), prev_r), vscale(0.5, a))
+        return infer_v(prev_r, prev_burn, my_position())
+
+    def tick(r, v, B):
+        """Compute next position and velocity, given current position,
+        velocity, and boost."""
+        rn = vadd(r, vadd(v, vscale(0.5, vadd(B, gravity(r)))))
+        vn = vadd(v, vadd(B, vaverage(gravity(r), gravity(rn))))
+        return rn, vn
+
+    def infer_v(rp, Bp, r):
+        """Compute current velocity given previous position, previous
+        boost, and current position."""
+        return vadd(vsub(r, rp), vscale(0.5, vadd(gravity(r), Bp)))
 
     def propitious(omega, T):
         # omega: angular velocity of target
@@ -150,6 +177,10 @@ def run_it(scenario):
         theta = angle(get_s()) + (pi/2 if clockwise else -pi/2)
         return ((cos(theta) * dv, sin(theta) * dv))
 
+    def tangent_from(r, dv, clockwise):
+        theta = angle(vnegate(r)) + (pi/2 if clockwise else -pi/2)
+        return ((cos(theta) * dv, sin(theta) * dv))
+
     # Sensor ports
     s_score, s_fuel, s_ex, s_ey, s_tx, s_ty = range(6)
 
@@ -187,10 +218,15 @@ def vscale(c, (x, y)):       return (c*x, c*y)
 def vadd((x0,y0), (x1,y1)):  return (x0+x1, y0+y1)
 def vsub((x0,y0), (x1,y1)):  return (x0-x1, y0-y1)
 
+def vaverage(v0, v1):        return vscale(0.5, vadd(v0, v1))
+
 def dot((x0,y0), (x1,y1)):   return x0 * x1 + y0 * y1
 def cross((x0,y0), (x1,y1)): return x0 * y1 - x1 * y0
 
-def relative_angle(v0, v1):  return atan2(cross(v0, v1), dot(v0, v1))
+def relative_angle(v0, v1):
+    #return atan2(cross(v0, v1), dot(v0, v1))
+    angle = acos(dot(v0, v1) / (magnitude(v0) * magnitude(v1)))
+    return angle if 0 <= cross(v0, v1) else -angle
 
 def rotate((x,y), a):
     ca, sa = cos(a), sin(a)
