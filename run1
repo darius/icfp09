@@ -1,0 +1,5 @@
+for s in 1001 1002 1003 1004
+do
+        echo Scenario $s
+        python scenario1.py $s
+done
