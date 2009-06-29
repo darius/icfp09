@@ -18,18 +18,18 @@ for frame in range(2**14):
 def field(u32, hi, lo):
     return (u32 >> lo) & ((1 << (hi + 1 - lo)) - 1)
 
-def decode(insn):
-    op = field(insn, 31, 28)
-    if op == 0:
-        return 'S', field(insn, 27, 24), field(insn, 23, 14), field(insn, 13, 0)
-    if 1 <= op <= 6:
-        return 'D', op, field(insn, 27, 14), field(insn, 13, 0)
-    assert False
+def insn_kind(insn):
+    return 'S' if field(insn, 31, 28) == 0 else 'D'
+
+def decode_S(insn):
+    return field(insn, 27, 24), field(insn, 23, 14), field(insn, 13, 0)
+
+def decode_D(insn):
+    return field(insn, 31, 28), field(insn, 27, 14), field(insn, 13, 0)
 
 def disassemble1(insn):
-    sd, _, __, ___ = decode(insn)
-    if sd == 'S':
-        _, op, imm, r1 = decode(insn)
+    if insn_kind(insn) == 'S':
+        op, imm, r1 = decode_S(insn)
         if op == 0: return 'noop'
         if op == 1:
             cmpi = field(insn, 23, 20)
@@ -38,16 +38,16 @@ def disassemble1(insn):
         if op == 2: return 'sqrt M[%d]' % r1
         if op == 3: return 'M[%d]' % r1
         if op == 4: return 'read %d' % r1
-        return 'XXX %d' % op
-    if sd == 'D':
-        _, op, r1, r2 = decode(insn)
+        assert False
+    else:
+        op, r1, r2 = decode_D(insn)
         if op == 1: return 'M[%d] + M[%d]' % (r1, r2)
         if op == 2: return 'M[%d] - M[%d]' % (r1, r2)
         if op == 3: return 'M[%d] * M[%d]' % (r1, r2)
         if op == 5: return 'M[%d] / M[%d]' % (r1, r2)
         if op == 4: return 'write %d <- M[%d]' % (r1, r2)
         if op == 6: return 'status ? M[%d] : M[%d]' % (r1, r2)
-    assert False
+        assert False
 
 def disassemble():
     for addr, insn in enumerate(insns):
@@ -70,13 +70,10 @@ status = False
 def step():
     for pc, insn in enumerate(insns):
         show(pc, insn)
-        sd, _, __, ___ = decode(insn)
-        if sd == 'S':
+        if insn_kind(insn) == 'S':
             s_insn(pc, insn)
-        elif sd == 'D':
-            d_insn(pc, insn)
         else:
-            assert False
+            d_insn(pc, insn)
 
 def get(addr):
     if addr < len(data):
@@ -88,7 +85,7 @@ def update(pc, value):
     print 'set %d = %g' % (pc, value)
 
 def d_insn(pc, insn):
-    _, op, r1, r2 = decode(insn)
+    op, r1, r2 = decode_D(insn)
     if op == 1:
         update(pc, get(r1) + get(r2))
     elif op == 2:
@@ -105,7 +102,7 @@ def d_insn(pc, insn):
         assert False
 
 def s_insn(pc, insn):
-    _, op, imm, r1 = decode(insn)
+    op, imm, r1 = decode_S(insn)
     if op == 0:
         return
     m = get(r1)
