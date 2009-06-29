@@ -46,7 +46,7 @@ def run_it(scenario):
         r1 = my_position()
         t1 = get_target()
         clockwise = (cross(r0, r1) < 0)
-        omega = relative_angle(t0, t1)
+        omega = relative_angle(t0, t1) # angular velocity of target
         print 'omega', omega
         dv, dv_prime, T = calculate_burn()
         while not propitious(omega, T):
@@ -55,12 +55,19 @@ def run_it(scenario):
             if 50000 < m.nsteps:
                 print 'Giving up'
                 return
-        burn(dv, clockwise)
+        burn(tangent(dv, clockwise))
         print 'Burned'
         show()
         set_dv((0.0, 0.0))
-        for i in range(int(T)): m.step()
-        burn(dv_prime, clockwise)
+        for i in range(int(T) - 1): # XXX assumes 1 <= T
+            prev_r = my_position()
+            m.step()
+            show()
+            tmp = my_next_position(prev_r)
+            print 'Estimated next r', magnitude(tmp), angle(tmp)
+        v_corr = course_correction(prev_r, omega)
+        burn(v_corr)
+        burn(vsub(tangent(dv_prime, clockwise), v_corr))
         print 'Inserted'
         show()
         set_dv((0.0, 0.0))
@@ -68,6 +75,31 @@ def run_it(scenario):
         for i in range(1000): m.step()
         print 'Score', get_score()
         show()
+
+    def course_correction(prev_r, omega):
+        next_r = my_next_position(prev_r)
+        next_t = rotate(get_target(), omega)
+        return vsub(next_t, next_r)
+
+    def my_next_position(prev_r):
+        # XXX not quite consonant with the spec:
+        r = my_position()
+        v = my_velocity(prev_r, r)
+        a = gravity_accel(r)
+        next_r = vadd(r, vadd(v, vscale(0.5, a)))
+        return next_r
+
+    def gravity_accel(r):
+        return vscale(-GM / magnitude(r)**3, r)
+
+    def my_velocity(prev_r, r):
+        # XXX not quite consonant with the spec:
+        #r = prev_r + prev_v + 0.5 * gravity_accel(prev_r)
+        #prev_v = r - prev_r - 0.5 * gravity_accel(prev_r)
+        #v = prev_v + gravity_accel(prev_r)
+        #v      = r - prev_r + 0.5 * gravity_accel(prev_r)
+        a = gravity_accel(prev_r)
+        return vadd(vsub(r, prev_r), vscale(0.5, a))
 
     def propitious(omega, T):
         # omega: angular velocity of target
@@ -79,7 +111,7 @@ def run_it(scenario):
         dest = angle(my_position()) + pi
         return angle_approx_zero(a - dest)
 
-    def extrapolate_target_angle(omega, T): # angle of target after time T
+    def extrapolate_target_angle(omega, T): # angle of target after interval T
         return angle(get_target()) + int(T) * omega
 
     def angle_approx_zero(a):
@@ -87,13 +119,13 @@ def run_it(scenario):
         mag_a = min(a, 2*pi - a)
         return mag_a < one_degree * 4e-3
 
-    def rr(a):  # range-reduce an angle
+    def rr(a):                  # range-reduce an angle
         while a < 0:     a += 2*pi
         while 2*pi <= a: a -= 2*pi
         assert 0 <= a < 2*pi
         return a
 
-    def calculate_burn():
+    def calculate_burn():       # Hohmann transfer values
         r1 = my_radius()
         r2 = magnitude(get_target())
         dv       = sqrt(GM / r1) * (sqrt(2 * r2 / (r1 + r2)) - 1)
@@ -101,10 +133,13 @@ def run_it(scenario):
         T        = pi * (r1 + r2) * sqrt((r1 + r2) / (8*GM))
         return dv, dv_prime, T
 
-    def burn(dv, clockwise):
-        theta = angle(get_s()) + (pi/2 if clockwise else -pi/2)
-        set_dv((cos(theta) * dv, sin(theta) * dv))
+    def burn(dv):
+        set_dv(dv)
         m.step()
+
+    def tangent(dv, clockwise):
+        theta = angle(get_s()) + (pi/2 if clockwise else -pi/2)
+        return ((cos(theta) * dv, sin(theta) * dv))
 
     # Sensor ports
     s_score, s_fuel, s_ex, s_ey, s_tx, s_ty = range(6)
@@ -147,6 +182,10 @@ def dot((x0,y0), (x1,y1)):   return x0 * x1 + y0 * y1
 def cross((x0,y0), (x1,y1)): return x0 * y1 - x1 * y0
 
 def relative_angle(v0, v1):  return atan2(cross(v0, v1), dot(v0, v1))
+
+def rotate((x,y), a):
+    ca, sa = cos(a), sin(a)
+    return (ca * x - sa * y, sa * x + ca * y)
 
 
 if __name__ == '__main__':
