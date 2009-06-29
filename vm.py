@@ -2,16 +2,6 @@ import math
 import struct
 import sys
 
-def read_uint(f):
-    chars = f.read(4)
-    if not chars: return None
-    return struct.unpack('<I', chars)[0]
-
-def read_double(f):
-    chars = f.read(8)
-    if not chars: return None
-    return struct.unpack('<d', chars)[0]
-
 insns = []
 data = []
 f = open('bin1.obf', 'rb')
