@@ -63,11 +63,13 @@ def run_it(scenario):
             prev_r = my_position()
             m.step()
             show()
-            tmp = my_next_position(prev_r)
+            tmp = my_next_position(my_velocity(prev_r, (0.0,0.0)))
             print 'Estimated next r', magnitude(tmp), angle(tmp)
-        v_corr = course_correction(prev_r, omega)
+        v = my_velocity(prev_r, (0.0,0.0))
+        prev_r = my_position()
+        v_corr = course_correction(omega, v)
         burn(v_corr)
-        burn(vsub(tangent(dv_prime, clockwise), v_corr))
+        circularize(clockwise, my_velocity(prev_r, v_corr))
         print 'Inserted'
         show()
         set_dv((0.0, 0.0))
@@ -76,15 +78,22 @@ def run_it(scenario):
         print 'Score', get_score()
         show()
 
-    def course_correction(prev_r, omega):
-        next_r = my_next_position(prev_r)
+    def course_correction(omega, v):
+        next_r = my_next_position(v)
         next_t = rotate(get_target(), omega)
         return vsub(next_t, next_r)
 
-    def my_next_position(prev_r):
+    def circularize(clockwise, v_current):
+        # Calculate and perform a circular-orbit insertion at the
+        # current radius. The idea: get our target velocity vector
+        # and subtract our current velocity.
+        speed = sqrt(GM / my_radius())
+        v_wanted = tangent(speed, clockwise)
+        burn(vsub(v_wanted, v_current))
+
+    def my_next_position(v):
         # XXX not quite consonant with the spec:
         r = my_position()
-        v = my_velocity(prev_r, r)
         a = gravity_accel(r)
         next_r = vadd(r, vadd(v, vscale(0.5, a)))
         return next_r
@@ -92,14 +101,14 @@ def run_it(scenario):
     def gravity_accel(r):
         return vscale(-GM / magnitude(r)**3, r)
 
-    def my_velocity(prev_r, r):
+    def my_velocity(prev_r, prev_burn):
         # XXX not quite consonant with the spec:
-        #r = prev_r + prev_v + 0.5 * gravity_accel(prev_r)
-        #prev_v = r - prev_r - 0.5 * gravity_accel(prev_r)
-        #v = prev_v + gravity_accel(prev_r)
-        #v      = r - prev_r + 0.5 * gravity_accel(prev_r)
-        a = gravity_accel(prev_r)
-        return vadd(vsub(r, prev_r), vscale(0.5, a))
+        #r = prev_r + prev_v + 0.5 * (prev_burn + gravity_accel(prev_r))
+        #prev_v = r - prev_r - 0.5 * (prev_burn + gravity_accel(prev_r))
+        #v = prev_v + prev_burn + gravity_accel(prev_r)
+        #v      = r - prev_r + 0.5 * (prev_burn + gravity_accel(prev_r))
+        a = vadd(prev_burn, gravity_accel(prev_r))
+        return vadd(vsub(my_position(), prev_r), vscale(0.5, a))
 
     def propitious(omega, T):
         # omega: angular velocity of target
