@@ -56,7 +56,7 @@ class VM:
         self.updated.clear()
 
     def end_step(self):
-        pass
+        if self.loud: print 'step'
 
     def disassemble1(self, insn):
         if insn_kind(insn) == 'S':

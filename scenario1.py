@@ -1,10 +1,11 @@
 from math import atan2, cos, hypot, pi, sin, sqrt
+import sys
 
 import vm
 
 def main():
-    one_step_test()
-    #run_it()
+    if False: one_step_test()
+    else: really_run_it()
 
 def one_step_test():
     s1vm = vm.VM(loud=True)
@@ -15,13 +16,18 @@ def one_step_test():
     s1vm.load('bin1.obf')
     s1vm.step()
 
+def really_run_it():
+    assert 2 == len(sys.argv)
+    run_it(int(sys.argv[1]))
+
 
 GM = 6.67428e-11 * 6.0e24
 
-def run_it():
+def run_it(scenario):
     m = vm.VM(loud=False)
     
     def run():
+        set_dv((0.0, 0.0))
         m.step()
         s0 = get_s()
         m.step()
@@ -30,7 +36,7 @@ def run_it():
         dv, dv_prime, t = calculate_burn()
         burn(dv, clockwise)
         set_dv((0.0, 0.0))
-        for i in range(t): m.step()
+        for i in range(int(t)): m.step()
         burn(dv_prime, clockwise)
         set_dv((0.0, 0.0))
         m.step()
@@ -69,7 +75,7 @@ def run_it():
         m.actuate(a_dvy, dvy)
 
     m.load('bin1.obf')
-    m.actuate(a_config, 1001)
+    m.actuate(a_config, scenario)
     run()
 
 def cross((x0,y0), (x1,y1)):
