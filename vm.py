@@ -2,33 +2,29 @@ import math
 import struct
 import sys
 
-scenario = 1001.0
-
-# Sensor ports
-s_score, s_fuel, s_sx, s_sy, s_tx, s_ty = range(6)
-
-# Actuator ports
-a_dvx, a_dvy, a_config = 2, 3, 0x3E80
+scenario = None
 
 insns = []
 data = []
-f = open('bin1.obf', 'rb')
-for frame in range(2**14):
-    bytes = f.read(12)
-    if not bytes: break
-    if frame % 2 == 0:
-        d, i = struct.unpack('<dI', bytes)
-    else:
-        i, d = struct.unpack('<Id', bytes)
-    insns.append(i)
-    data.append(d)
+
+def load(filename):
+    f = open(filename, 'rb')
+    for frame in range(2**14):
+        bytes = f.read(12)
+        if not bytes: break
+        if frame % 2 == 0:
+            d, i = struct.unpack('<dI', bytes)
+        else:
+            i, d = struct.unpack('<Id', bytes)
+        insns.append(i)
+        data.append(d)
 
 status = False
 
 def main():
     assert 2 == len(sys.argv)
-    scenario = float(sys.argv[1])
-    step()
+    load(sys.argv[1])
+    disassemble()
 
 def disassemble():
     for addr, insn in enumerate(insns):
@@ -72,7 +68,7 @@ def do_S(pc, insn):
 
 def disassemble_cmp(insn, r1):
     cmpi = field(insn, 23, 20)
-    cmp = '< <= = >= >'.split()[cmpi] # XXX boundscheck
+    cmp = '< <= = >= >'.split()[cmpi]
     return 'status = (M[%d] %s 0.0)' % (r1, cmp)
 
 def do_cmp(insn, r1):
@@ -130,14 +126,10 @@ def output(sensor, value):
     print 'sensor %d <- %g' % (sensor, value)
 
 def input(actuator):
-    if actuator == a_dvx:
-        return 0.0
-    if actuator == a_dvy:
-        return 0.0
-    if actuator == a_config:
+    # XXX hook this up to the scenario properly
+    if actuator == 0x3E80:
         return scenario
-    assert False
+    return 0.0
 
 if __name__ == '__main__':
-#    disassemble()
     main()
