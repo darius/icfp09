@@ -16,14 +16,12 @@ insns = []
 data = []
 f = open('bin1.obf', 'rb')
 for frame in range(2**14):
-    if frame % 2 == 0:          # WTF is this randomness?
-        d = read_double(f)
-        i = read_uint(f)
+    bytes = f.read(12)
+    if not bytes: break
+    if frame % 2 == 0:
+        d, i = struct.unpack('<dI', bytes)
     else:
-        i = read_uint(f)
-        d = read_double(f)
-    if i is None and d is None:
-        break
+        i, d = struct.unpack('<Id', bytes)
     insns.append(i)
     data.append(d)
 
