@@ -53,7 +53,7 @@ def disassemble1(insn):
         return disassemble_D(insn)
 
 def disassemble_S(insn):
-    op, imm, r1 = decode_S(insn)
+    op, r1 = decode_S(insn)
     if op == 0: return 'noop'
     if op == 1: return disassemble_cmp(insn, r1)
     if op == 2: return 'sqrt M[%d]' % r1
@@ -62,7 +62,7 @@ def disassemble_S(insn):
     assert False
 
 def do_S(pc, insn):
-    op, imm, r1 = decode_S(insn)
+    op, r1 = decode_S(insn)
     if   op == 0: pass
     elif op == 1: do_cmp(insn, r1)
     elif op == 2: update(pc, math.sqrt(get(r1)))
@@ -109,7 +109,7 @@ def insn_kind(insn):
     return 'S' if field(insn, 31, 28) == 0 else 'D'
 
 def decode_S(insn):
-    return field(insn, 27, 24), field(insn, 23, 14), field(insn, 13, 0)
+    return field(insn, 27, 24), field(insn, 13, 0)
 
 def decode_D(insn):
     return field(insn, 31, 28), field(insn, 27, 14), field(insn, 13, 0)
