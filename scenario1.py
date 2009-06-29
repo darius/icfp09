@@ -3,6 +3,8 @@ import sys
 
 import vm
 
+team_id = 468
+
 def main():
     if False: one_step_test()
     else: really_run_it()
@@ -24,7 +26,8 @@ def really_run_it():
 GM = 6.67428e-11 * 6.0e24
 
 def run_it(scenario):
-    m = vm.VM(loud=False)
+    trace_file = open('%d.osf' % scenario, 'wb')
+    m = vm.VM(trace_file=trace_file, loud=False)
     
     def run():
         set_dv((0.0, 0.0))
@@ -76,7 +79,10 @@ def run_it(scenario):
 
     m.load('bin1.obf')
     m.actuate(a_config, scenario)
+    m.write_trace_header(team_id, scenario)
     run()
+    m.write_trace_end()
+    trace_file.close()
 
 def cross((x0,y0), (x1,y1)):
     return x0 * y1 - x1 * y0

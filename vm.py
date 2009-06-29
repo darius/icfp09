@@ -13,7 +13,10 @@ scenario = None
 
 class VM:
 
-    def __init__(self, loud=False):
+    # Setup
+
+    def __init__(self, trace_file=None, loud=False):
+        self.trace = trace_file
         self.loud = loud
         self.clear()
 
@@ -24,6 +27,7 @@ class VM:
         self.actuators = {}
         self.updated = set()
         self.status = False
+        self.nsteps = 0
 
     def load(self, filename):
         f = open(filename, 'rb')
@@ -36,6 +40,27 @@ class VM:
                 i, d = struct.unpack('<Id', bytes)
             self.insns.append(i)
             self.data.append(d)
+
+    # Write the submitted-trace file
+            
+    def write_trace_header(self, team_id, scenario):
+        self.trace.write(struct.pack('<I', 0xCAFEBABE))
+        self.trace.write(struct.pack('<I', team_id))
+        self.trace.write(struct.pack('<I', scenario))
+
+    def write_trace_frame(self):
+        if not self.updated: return
+        self.trace.write(struct.pack('<I', self.nsteps))
+        self.trace.write(struct.pack('<I', len(self.updated)))
+        for a in sorted(self.updated):
+            self.trace.write(struct.pack('<I', a))
+            self.trace.write(struct.pack('<d', self.actuators[a]))
+
+    def write_trace_end(self):
+        self.trace.write(struct.pack('<I', self.nsteps))
+        self.trace.write(struct.pack('<I', 0))
+
+    # Interpret instructions
 
     def disassemble(self):
         for addr, insn in enumerate(self.insns):
@@ -54,9 +79,12 @@ class VM:
                 self.do_D(pc, insn)
         self.end_step()
         self.updated.clear()
+        self.nsteps += 1
 
     def end_step(self):
         if self.loud: print 'step'
+        if self.trace:
+            self.write_trace_frame()
 
     def disassemble1(self, insn):
         if insn_kind(insn) == 'S':
@@ -126,6 +154,8 @@ class VM:
     def set(self, pc, value):
         self.data[pc] = value
         if self.loud: print 'set %d = %g' % (pc, value)
+
+    # Sense/act
 
     def output(self, sensor, value):
         self.sensors[sensor] = value
