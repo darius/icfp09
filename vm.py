@@ -13,12 +13,16 @@ scenario = None
 
 class VM:
 
-    def __init__(self):
+    def __init__(self, loud=False):
+        self.loud = loud
         self.clear()
 
     def clear(self):
         self.insns = []
         self.data = []
+        self.sensors = {}
+        self.actuators = {}
+        self.updated = set()
         self.status = False
 
     def load(self, filename):
@@ -43,11 +47,16 @@ class VM:
 
     def step(self):
         for pc, insn in enumerate(self.insns):
-            self.show(pc, insn)
+            if self.loud: self.show(pc, insn)
             if insn_kind(insn) == 'S':
                 self.do_S(pc, insn)
             else:
                 self.do_D(pc, insn)
+        self.end_step()
+        self.updated.clear()
+
+    def end_step(self):
+        pass
 
     def disassemble1(self, insn):
         if insn_kind(insn) == 'S':
@@ -68,9 +77,9 @@ class VM:
         op, r1 = decode_S(insn)
         if   op == 0: pass
         elif op == 1: self.do_cmp(insn, r1)
-        elif op == 2: self.update(pc, math.sqrt(self.get(r1)))
-        elif op == 3: self.update(pc, self.get(r1))
-        elif op == 4: self.update(pc, self.input(r1))
+        elif op == 2: self.set(pc, math.sqrt(self.get(r1)))
+        elif op == 3: self.set(pc, self.get(r1))
+        elif op == 4: self.set(pc, self.input(r1))
         else:         assert False
 
     def disassemble_cmp(self, insn, r1):
@@ -99,30 +108,37 @@ class VM:
 
     def do_D(self, pc, insn):
         op, r1, r2 = decode_D(insn)
-        if   op == 1: self.update(pc, self.get(r1) + self.get(r2))
-        elif op == 2: self.update(pc, self.get(r1) - self.get(r2))
-        elif op == 3: self.update(pc, self.get(r1) * self.get(r2))
-        elif op == 4: self.update(pc, self.get(r1) / self.get(r2)
-                                  if self.get(r2) != 0.0
-                                  else 0.0)
+        if   op == 1: self.set(pc, self.get(r1) + self.get(r2))
+        elif op == 2: self.set(pc, self.get(r1) - self.get(r2))
+        elif op == 3: self.set(pc, self.get(r1) * self.get(r2))
+        elif op == 4: self.set(pc, self.get(r1) / self.get(r2)
+                               if self.get(r2) != 0.0
+                               else 0.0)
         elif op == 5: self.output(r1, self.get(r2))
-        elif op == 6: self.update(pc, self.get(r1)
-                                  if self.status
-                                  else self.get(r2))
+        elif op == 6: self.set(pc, self.get(r1)
+                               if self.status
+                               else self.get(r2))
         else:         assert False
 
     def get(self, addr):
         return self.data[addr] if addr < len(self.data) else 0.0
 
-    def update(self, pc, value):
+    def set(self, pc, value):
         self.data[pc] = value
-        print 'set %d = %g' % (pc, value)
+        if self.loud: print 'set %d = %g' % (pc, value)
 
     def output(self, sensor, value):
-        print 'sensor %d <- %g' % (sensor, value)
+        self.sensors[sensor] = value
+        if self.loud: print 'sensor %d <- %g' % (sensor, value)
 
     def input(self, actuator):
-        return 0.0
+        return self.actuators[actuator]
+
+    def actuate(self, actuator, value):
+        value = float(value)
+        if value != self.actuators.get(actuator):
+            self.updated.add(actuator)
+        self.actuators[actuator] = value
 
 
 def insn_kind(insn):
