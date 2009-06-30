@@ -14,26 +14,11 @@ def main():
 def run_it(scenario):
     m = compiledvm.CompiledVM('bin2', loud=False)
 
-    # Before trying to solve the scenario, let's just check that the
-    # initial orbits are circular, as promised:
-    def watch():
-        set_dv((0., 0.))
-        t = None
-        for i in range(100):
-            m.step()
-            r = my_position()
-            if t: print angle(get_target()) - angle(t)
-            t = get_target()
-            print ('r %g\ta %g\tt %g\ta %g'
-                   % (magnitude(r), angle(r), magnitude(t), angle(t)))
-
     def show():
         r = my_position()
         t = get_target()
         print ('%5d   %10.2f %10.f\n        %10.2f %10.2f\n        %10.2f %10.2f'
                % (m.nsteps, r[0], r[1], t[0]-r[0], t[1]-r[1], t[0], t[1]))
-#        print ('%d\tr %g\ta %g\tt %g\ta %g'
-#               % (m.nsteps, magnitude(r), angle(r), magnitude(t), angle(t)))
 
     def run():
         set_dv((0., 0.))
@@ -45,7 +30,6 @@ def run_it(scenario):
         t1 = get_target()
         clockwise = (cross(r0, r1) < 0)
         omega = relative_angle(t0, t1) # angular velocity of target
-        print 'omega', omega
 
         dv, dv_prime, T = calculate_burn()
         while not propitious(omega, T):
@@ -60,17 +44,12 @@ def run_it(scenario):
         show()
 
         set_dv((0., 0.))
-        tmp = my_next_position(my_velocity(prev_r, (0.,0.)))
         fudge = 0 if scenario == 2002 else 16  # XXX cheating
         for i in range(int(T) - fudge):
             prev_r = my_position()
             next_target = rotate(get_target(), omega)
             m.step()
             show()
-            #print 'My discrepancy', vsub(tmp, my_position())
-            #print 'Target relative discrepancy', (magnitude(vsub(next_target, get_target())) / magnitude(get_target()))
-            tmp = my_next_position(my_velocity(prev_r, (0.,0.)))
-            #print 'Estimated next r', magnitude(tmp), angle(tmp)
 
         B0, B1 = compute_insertion(clockwise, omega, prev_r)
         print 'Insertion burns'
