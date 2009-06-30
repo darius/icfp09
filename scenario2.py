@@ -2,6 +2,7 @@ from math import acos, atan2, cos, hypot, pi, sin, sqrt
 import sys
 
 import compiledvm
+from mechanics import *
 
 team_id = 468
 
@@ -9,10 +10,6 @@ def main():
     assert 2 == len(sys.argv)
     run_it(int(sys.argv[1]))
 
-
-GM = 6.67428e-11 * 6.0e24
-
-one_degree = pi / 180.0
 
 def run_it(scenario):
     m = compiledvm.CompiledVM('bin2', loud=False)
@@ -105,36 +102,12 @@ def run_it(scenario):
         print 'vt', vt
         return compute_rendezvous(r0, v0, rt, vt)
 
-    def compute_rendezvous(r0, v0, rt, vt):
-        """Compute two successive burns that take us from the state
-        (r0, v0) to the state (rt, vt) (approximately)."""
-        U = vsub(rt, vadd(r0, vscale(2., vadd(v0, gravity(r0)))))
-        V = vsub(vt, vadd(v0, vscale(2., gravity(r0))))
-        B0 = vsub(U, vscale(0.5, V))
-        B1 = vsub(vscale(1.5, V), U)
-        return B0, B1
-
     def my_next_position(v):
         rn, vn = tick(my_position(), v, (0.,0.))
         return rn
 
-    def gravity(r):
-        return vscale(-GM / magnitude(r)**3, r)
-
     def my_velocity(prev_r, prev_burn):
         return infer_v(prev_r, prev_burn, my_position())
-
-    def tick(r, v, B):
-        """Compute next position and velocity, given current position,
-        velocity, and boost."""
-        rn = vadd(r, vadd(v, vscale(0.5, vadd(B, gravity(r)))))
-        vn = vadd(v, vadd(B, vaverage(gravity(r), gravity(rn))))
-        return rn, vn
-
-    def infer_v(rp, Bp, r):
-        """Compute current velocity given previous position, previous
-        boost, and current position."""
-        return vadd(vsub(r, rp), vscale(0.5, vadd(gravity(r), Bp)))
 
     def propitious(omega, T):
         # omega: angular velocity of target
@@ -160,13 +133,9 @@ def run_it(scenario):
         assert 0 <= a < 2*pi
         return a
 
-    def calculate_burn():       # Hohmann transfer values
-        r1 = my_radius()
-        r2 = magnitude(get_target())
-        dv       = sqrt(GM / r1) * (sqrt(2 * r2 / (r1 + r2)) - 1)
-        dv_prime = sqrt(GM / r2) * (1 - sqrt(2 * r1 / (r1 + r2)))
-        T        = pi * (r1 + r2) * sqrt((r1 + r2) / (8*GM))
-        return dv, dv_prime, T
+    def calculate_burn():
+        return calculate_hohmann_transfer(my_radius(),
+                                          magnitude(get_target()))
 
     def burn(dv):
         set_dv(dv)
@@ -204,29 +173,6 @@ def run_it(scenario):
     m.actuate(a_config, scenario)
     run()
     m.write_trace(open('%d.osf' % scenario, 'wb'), team_id, scenario)
-
-def magnitude((x, y)):       return hypot(x, y)
-def angle((x, y)):           return atan2(y, x)
-
-def vnegate((x, y)):         return (-x, -y)
-def vscale(c, (x, y)):       return (c*x, c*y)
-
-def vadd((x0,y0), (x1,y1)):  return (x0+x1, y0+y1)
-def vsub((x0,y0), (x1,y1)):  return (x0-x1, y0-y1)
-
-def vaverage(v0, v1):        return vscale(0.5, vadd(v0, v1))
-
-def dot((x0,y0), (x1,y1)):   return x0 * x1 + y0 * y1
-def cross((x0,y0), (x1,y1)): return x0 * y1 - x1 * y0
-
-def relative_angle(v0, v1):
-    #return atan2(cross(v0, v1), dot(v0, v1))
-    angle = acos(dot(v0, v1) / (magnitude(v0) * magnitude(v1)))
-    return angle if 0 <= cross(v0, v1) else -angle
-
-def rotate((x,y), a):
-    ca, sa = cos(a), sin(a)
-    return (ca * x - sa * y, sa * x + ca * y)
 
 
 if __name__ == '__main__':

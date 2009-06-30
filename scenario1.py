@@ -2,6 +2,7 @@ from math import atan2, cos, hypot, pi, sin, sqrt
 import sys
 
 import compiledvm
+from mechanics import *
 
 team_id = 468
 
@@ -9,8 +10,6 @@ def main():
     assert 2 == len(sys.argv)
     run_it(int(sys.argv[1]))
 
-
-GM = 6.67428e-11 * 6.0e24
 
 def run_it(scenario):
     m = compiledvm.CompiledVM('bin1', loud=False)
@@ -33,12 +32,8 @@ def run_it(scenario):
         print 'Score', get_score()
 
     def calculate_burn():
-        r1 = get_current_radius()
-        r2 = get_target_radius()
-        dv       = sqrt(GM / r1) * (sqrt(2 * r2 / (r1 + r2)) - 1)
-        dv_prime = sqrt(GM / r2) * (1 - sqrt(2 * r1 / (r1 + r2)))
-        t        = pi * (r1 + r2) * sqrt((r1 + r2) / (8*GM))
-        return dv, dv_prime, t
+        return calculate_hohmann_transfer(get_current_radius(),
+                                          get_target_radius())
 
     def burn(dv, clockwise):
         theta = get_theta() + (pi/2 if clockwise else -pi/2)
@@ -66,9 +61,6 @@ def run_it(scenario):
     m.actuate(a_config, scenario)
     run()
     m.write_trace(open('%d.osf' % scenario, 'wb'), team_id, scenario)
-
-def cross((x0,y0), (x1,y1)):
-    return x0 * y1 - x1 * y0
 
 
 if __name__ == '__main__':
