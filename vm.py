@@ -13,12 +13,8 @@ class VM:
 
     # Setup
 
-    def __init__(self, trace_file=None, loud=False):
-        self.trace = trace_file
+    def __init__(self, loud=False):
         self.loud = loud
-        self.clear()
-
-    def clear(self):
         self.insns = []
         self.data = []
         self.sensors = {}
@@ -26,6 +22,7 @@ class VM:
         self.updated = set()
         self.status = False
         self.nsteps = 0
+        self.trace = []
 
     def load(self, filename):
         f = open(filename, 'rb')
@@ -39,24 +36,17 @@ class VM:
             self.insns.append(i)
             self.data.append(d)
 
-    # Write the submitted-trace file
+    # The submitted-trace file
             
-    def write_trace_header(self, team_id, scenario):
-        self.trace.write(struct.pack('<I', 0xCAFEBABE))
-        self.trace.write(struct.pack('<I', team_id))
-        self.trace.write(struct.pack('<I', scenario))
-
-    def write_trace_frame(self):
-        if not self.updated: return
-        self.trace.write(struct.pack('<I', self.nsteps))
-        self.trace.write(struct.pack('<I', len(self.updated)))
-        for a in sorted(self.updated):
-            self.trace.write(struct.pack('<I', a))
-            self.trace.write(struct.pack('<d', self.actuators[a]))
-
-    def write_trace_end(self):
-        self.trace.write(struct.pack('<I', self.nsteps))
-        self.trace.write(struct.pack('<I', 0))
+    def write_trace(self, trace_file, team_id, scenario):
+        def write(*args):
+            trace_file.write(struct.pack(*args))
+        write('<III', 0xCAFEBABE, team_id, scenario)
+        for step, acts in self.trace:
+            write('<II', step, len(acts))
+            for a_id, value in acts:
+                write('<Id', a_id, value)
+        write('<II', self.nsteps, 0)
 
     # Interpret instructions
 
@@ -75,14 +65,12 @@ class VM:
                 self.do_S(pc, insn)
             else:
                 self.do_D(pc, insn)
-        self.end_step()
-        self.updated.clear()
-        self.nsteps += 1
-
-    def end_step(self):
         if self.loud: print 'step'
-        if self.trace:
-            self.write_trace_frame()
+        if self.updated:
+            acts = [(a, self.actuators[a]) for a in sorted(self.updated)]
+            self.trace.append((self.nsteps, acts))
+            self.updated.clear()
+        self.nsteps += 1
 
     def disassemble1(self, insn):
         if insn_kind(insn) == 'S':

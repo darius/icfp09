@@ -15,8 +15,8 @@ GM = 6.67428e-11 * 6.0e24
 one_degree = pi / 180.0
 
 def run_it(scenario):
-    trace_file = open('%d.osf' % scenario, 'wb')
-    m = vm.VM(trace_file=trace_file, loud=False)
+    m = vm.VM(loud=False)
+    m.load('bin2.obf')
 
     # Before trying to solve the scenario, let's just check that the
     # initial orbits are circular, as promised:
@@ -202,12 +202,9 @@ def run_it(scenario):
         m.actuate(a_dvx, dvx)
         m.actuate(a_dvy, dvy)
 
-    m.load('bin2.obf')
     m.actuate(a_config, scenario)
-    m.write_trace_header(team_id, scenario)
     run()
-    m.write_trace_end()
-    trace_file.close()
+    m.write_trace(open('%d.osf' % scenario, 'wb'), team_id, scenario)
 
 def magnitude((x, y)):       return hypot(x, y)
 def angle((x, y)):           return atan2(y, x)
