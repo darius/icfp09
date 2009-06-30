@@ -8,8 +8,6 @@ def main():
     vm.load(sys.argv[1])
     vm.disassemble()
 
-scenario = None
-
 
 class VM:
 
