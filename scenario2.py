@@ -96,21 +96,10 @@ def run_it(scenario):
         # (That's our launch window.)
         a = extrapolate_target_angle(omega, T)
         dest = angle(my_position()) + pi
-        return angle_approx_zero(a - dest)
+        return angles_approx_equal(a, dest, one_degree * 4e-3)
 
     def extrapolate_target_angle(omega, T): # angle of target after interval T
         return angle(get_target()) + int(T) * omega
-
-    def angle_approx_zero(a):
-        a = rr(a)
-        mag_a = min(a, 2*pi - a)
-        return mag_a < one_degree * 4e-3
-
-    def rr(a):                  # range-reduce an angle
-        while a < 0:     a += 2*pi
-        while 2*pi <= a: a -= 2*pi
-        assert 0 <= a < 2*pi
-        return a
 
     def calculate_burn():
         return calculate_hohmann_transfer(my_radius(),

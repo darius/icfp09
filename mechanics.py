@@ -4,6 +4,7 @@ GM = 6.67428e-11 * 6.0e24
 
 one_degree = pi / 180.0
 
+
 def magnitude((x, y)):       return hypot(x, y)
 def angle((x, y)):           return atan2(y, x)
 
@@ -19,13 +20,23 @@ def dot((x0,y0), (x1,y1)):   return x0 * x1 + y0 * y1
 def cross((x0,y0), (x1,y1)): return x0 * y1 - x1 * y0
 
 def relative_angle(v0, v1):
-    #return atan2(cross(v0, v1), dot(v0, v1))
-    angle = acos(dot(v0, v1) / (magnitude(v0) * magnitude(v1)))
-    return angle if 0 <= cross(v0, v1) else -angle
+    return atan2(cross(v0, v1), dot(v0, v1))
+
 
 def rotate((x,y), a):
     ca, sa = cos(a), sin(a)
     return (ca * x - sa * y, sa * x + ca * y)
+
+def angles_approx_equal(a1, a2, tolerance):
+    a = range_reduce(a1 - a2)
+    mag_a = min(a, 2*pi - a)
+    return mag_a < tolerance
+
+def range_reduce(a):
+    while a < 0:     a += 2*pi
+    while 2*pi <= a: a -= 2*pi
+    assert 0 <= a < 2*pi
+    return a
 
 
 def calculate_hohmann_transfer(r1, r2):
