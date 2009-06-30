@@ -6,19 +6,6 @@ import compiledvm
 team_id = 468
 
 def main():
-    if False: one_step_test()
-    else: really_run_it()
-
-def one_step_test():
-    s1vm = vm.VM(loud=True)
-    a_dvx, a_dvy, a_config = 2, 3, 0x3E80
-    s1vm.actuate(a_config, 1001)
-    s1vm.actuate(a_dvx, 0)
-    s1vm.actuate(a_dvy, 0)
-    s1vm.load('bin1.obf')
-    s1vm.step()
-
-def really_run_it():
     assert 2 == len(sys.argv)
     run_it(int(sys.argv[1]))
 
