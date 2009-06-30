@@ -1,4 +1,4 @@
-CFLAGS := -g2 -fPIC -fno-common
+CFLAGS := -g2 -O2 -fPIC -fno-common
 
 all: libbin1.dylib libbin2.dylib
 

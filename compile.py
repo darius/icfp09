@@ -33,9 +33,11 @@ def write_code(f):
     print >>f, 'int step(double *M,'
     print >>f, '         double *sensors,'
     print >>f, '         double *actuators,'
-    print >>f, '         int *status) {'
+    print >>f, '         int *pstatus) {'
+    print >>f, '  int status = *pstatus;'
     for pc, insn in enumerate(insns):
         compile1(f, pc, insn)
+    print >>f, '  *pstatus = status;'
     print >>f, '  return 0;'
     print >>f, '}'
 
@@ -48,7 +50,7 @@ def compile1(f, pc, insn):
         def compile_cmp():
             cmpi = field(insn, 23, 21)
             cmp = '< <= == >= >'.split()[cmpi]
-            print >>f, '  *status = (M[%d] %s 0.0);' % (r1, cmp)
+            print >>f, '  status = (M[%d] %s 0.0);' % (r1, cmp)
         if   op == 0: pass
         elif op == 1: compile_cmp()
         elif op == 2: assign('sqrt(M[%d])' % r1)
@@ -63,7 +65,7 @@ def compile1(f, pc, insn):
         elif op == 4: assign('(M[%d] == 0.0 ? 0.0 : M[%d] / M[%d])'
                              % (r2, r1, r2))
         elif op == 5: print >>f, '  sensors[%d] = M[%d];' % (r1, r2)
-        elif op == 6: assign('(*status ? M[%d] : M[%d])' % (r1, r2))
+        elif op == 6: assign('(status ? M[%d] : M[%d])' % (r1, r2))
         else:         assert False
 
 def get_actuator(r1):
