@@ -65,8 +65,8 @@ def run_it(scenario):
 
         set_dv((0., 0.))
         tmp = my_next_position(my_velocity(prev_r, (0.,0.)))
-        fudge = 16  # or 0 for 2002
-        for i in range(int(T) - fudge): # XXX
+        fudge = 0 if scenario == 2002 else 16  # XXX cheating
+        for i in range(int(T) - fudge):
             prev_r = my_position()
             next_target = rotate(get_target(), omega)
             m.step()
