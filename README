@@ -2,4 +2,5 @@ Run make, run1, and run2. Currently only works on OS X, because the
 dynamic-library building in the Makefile is OS-specific.
 
 The scenario1 code is translated from a C version by Edward Kmett and
-me.
+me. This has evolved since the contest finished: I replaced the VM
+interpreter with a compiler and tidied the code some.
