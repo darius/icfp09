@@ -129,8 +129,8 @@ class VM:
         if op == 1: return 'M[%d] + M[%d]' % (r1, r2)
         if op == 2: return 'M[%d] - M[%d]' % (r1, r2)
         if op == 3: return 'M[%d] * M[%d]' % (r1, r2)
-        if op == 5: return 'M[%d] / M[%d]' % (r1, r2)
-        if op == 4: return 'write %d <- M[%d]' % (r1, r2)
+        if op == 4: return 'M[%d] / M[%d]' % (r1, r2)
+        if op == 5: return 'write %d <- M[%d]' % (r1, r2)
         if op == 6: return 'status ? M[%d] : M[%d]' % (r1, r2)
         assert False
 
