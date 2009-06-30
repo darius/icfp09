@@ -1,1 +1,2 @@
-Run scripts run1 and run2.
+Run make, run1, and run2. Currently only works on OS X, because the
+dynamic-library building in the Makefile is OS-specific.
