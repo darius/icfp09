@@ -1,7 +1,7 @@
 from math import acos, atan2, cos, hypot, pi, sin, sqrt
 import sys
 
-import vm
+import compiledvm
 
 team_id = 468
 
@@ -15,8 +15,7 @@ GM = 6.67428e-11 * 6.0e24
 one_degree = pi / 180.0
 
 def run_it(scenario):
-    m = vm.VM(loud=False)
-    m.load('bin2.obf')
+    m = compiledvm.CompiledVM('bin2', loud=False)
 
     # Before trying to solve the scenario, let's just check that the
     # initial orbits are circular, as promised:

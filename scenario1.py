@@ -1,7 +1,7 @@
 from math import atan2, cos, hypot, pi, sin, sqrt
 import sys
 
-import vm
+import compiledvm
 
 team_id = 468
 
@@ -26,8 +26,7 @@ def really_run_it():
 GM = 6.67428e-11 * 6.0e24
 
 def run_it(scenario):
-    m = vm.VM(loud=False)
-    m.load('bin1.obf')
+    m = compiledvm.CompiledVM('bin1', loud=False)
     
     def run():
         set_dv((0.0, 0.0))

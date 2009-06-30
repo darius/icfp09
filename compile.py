@@ -39,8 +39,6 @@ def write_code(f):
     print >>f, '  return 0;'
     print >>f, '}'
 
-# XXX the M[] refs must allow out of the initialized range, I think?
-
 def compile1(f, pc, insn):
     def assign(expr):
         print >>f, '  M[%d] = %s;' % (pc, expr)
@@ -69,7 +67,6 @@ def compile1(f, pc, insn):
         else:         assert False
 
 def get_actuator(r1):
-    if r1 == 16000: return '1001.0' # XXX
     return 'actuators[%d]' % r1
 
 def insn_kind(insn):
