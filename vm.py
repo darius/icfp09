@@ -103,8 +103,8 @@ class VM:
         op, r1 = decode_S(insn)
         if   op == 0: pass
         elif op == 1: self.do_cmp(insn, r1)
-        elif op == 2: self.set(pc, math.sqrt(self.get(r1)))
-        elif op == 3: self.set(pc, self.get(r1))
+        elif op == 2: self.set(pc, math.sqrt(self.data[r1]))
+        elif op == 3: self.set(pc, self.data[r1])
         elif op == 4: self.set(pc, self.input(r1))
         else:         assert False
 
@@ -115,11 +115,11 @@ class VM:
 
     def do_cmp(self, insn, r1):
         cmpi = field(insn, 23, 21)
-        if   cmpi == 0: self.status = (self.get(r1) <  0.0)
-        elif cmpi == 1: self.status = (self.get(r1) <= 0.0)
-        elif cmpi == 2: self.status = (self.get(r1) == 0.0)
-        elif cmpi == 3: self.status = (self.get(r1) >= 0.0)
-        elif cmpi == 4: self.status = (self.get(r1) >  0.0)
+        if   cmpi == 0: self.status = (self.data[r1] <  0.0)
+        elif cmpi == 1: self.status = (self.data[r1] <= 0.0)
+        elif cmpi == 2: self.status = (self.data[r1] == 0.0)
+        elif cmpi == 3: self.status = (self.data[r1] >= 0.0)
+        elif cmpi == 4: self.status = (self.data[r1] >  0.0)
         else: assert False
 
     def disassemble_D(self, insn):
@@ -134,20 +134,17 @@ class VM:
 
     def do_D(self, pc, insn):
         op, r1, r2 = decode_D(insn)
-        if   op == 1: self.set(pc, self.get(r1) + self.get(r2))
-        elif op == 2: self.set(pc, self.get(r1) - self.get(r2))
-        elif op == 3: self.set(pc, self.get(r1) * self.get(r2))
-        elif op == 4: self.set(pc, self.get(r1) / self.get(r2)
-                               if self.get(r2) != 0.0
+        if   op == 1: self.set(pc, self.data[r1] + self.data[r2])
+        elif op == 2: self.set(pc, self.data[r1] - self.data[r2])
+        elif op == 3: self.set(pc, self.data[r1] * self.data[r2])
+        elif op == 4: self.set(pc, self.data[r1] / self.data[r2]
+                               if self.data[r2] != 0.0
                                else 0.0)
-        elif op == 5: self.output(r1, self.get(r2))
-        elif op == 6: self.set(pc, self.get(r1)
+        elif op == 5: self.output(r1, self.data[r2])
+        elif op == 6: self.set(pc, self.data[r1]
                                if self.status
-                               else self.get(r2))
+                               else self.data[r2])
         else:         assert False
-
-    def get(self, addr):
-        return self.data[addr] if addr < len(self.data) else 0.0
 
     def set(self, pc, value):
         self.data[pc] = value
