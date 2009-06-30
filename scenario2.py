@@ -1,4 +1,4 @@
-from math import acos, atan2, cos, hypot, pi, sin, sqrt
+from math import cos, pi, sin, sqrt
 import sys
 
 import compiledvm
