@@ -111,7 +111,7 @@ class VM:
         else:         assert False
 
     def disassemble_cmp(self, insn, r1):
-        cmpi = field(insn, 23, 20)
+        cmpi = field(insn, 23, 21)
         cmp = '< <= = >= >'.split()[cmpi]
         return 'status = (M[%d] %s 0.0)' % (r1, cmp)
 
