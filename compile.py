@@ -46,7 +46,6 @@ def write_code(f):
 def compile1(f, pc, insn):
     def assign(expr):
         print >>f, '  M[%d] = %s;' % (pc, expr)
-        #print >>f, '  printf("set %d = %%g\\n", M[%d]);' % (pc, pc)
     if insn_kind(insn) == 'S':
         op, r1 = decode_S(insn)
         def compile_cmp():
