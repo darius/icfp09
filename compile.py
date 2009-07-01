@@ -16,16 +16,18 @@ def compile(pyfile, cfile, f):
         bytes = f.read(12)
         if not bytes: break
         if frame % 2 == 0:
-            d, i = struct.unpack('<dI', bytes)
+            d, i = bytes[:8], struct.unpack('<I', bytes[8:])[0]
         else:
-            i, d = struct.unpack('<Id', bytes)
+            i, d = struct.unpack('<I', bytes[:4])[0], bytes[4:]
         insns.append(i)
         data.append(d)
     write_data(pyfile)
     write_code(cfile)
 
 def write_data(pyfile):
-    print >>pyfile, 'data = %r' % data
+    print >>pyfile, 'import struct'
+    print >>pyfile, 'def unpack(b): return struct.unpack("<d", b)[0]'
+    print >>pyfile, 'data = map(unpack, %r)' % data
 
 def write_code(f):
     print >>f, '#include <math.h>'
