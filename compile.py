@@ -55,9 +55,8 @@ def compile1(out, pc, insn):
         op = field(insn, 27, 24)
         r1 = field(insn, 13, 0)
         def compile_cmp():
-            cmpi = field(insn, 23, 21)
-            cmp = '< <= == >= >'.split()[cmpi]
-            out('  status = (M[%d] %s 0.0);', r1, cmp)
+            relation = '< <= == >= >'.split()[field(insn, 23, 21)]
+            out('  status = (M[%d] %s 0.0);', r1, relation)
         if   op == 0: pass
         elif op == 1: compile_cmp()
         elif op == 2: assign('sqrt(M[%d])', r1)
