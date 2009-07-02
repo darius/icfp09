@@ -8,11 +8,11 @@ def main():
             open(stem + '.c', 'w'),
             open(stem + '.obf', 'rb'))
 
-def compile(pyfile, cfile, f):
+def compile(pyfile, cfile, infile):
     insns = []
     data = []
     for frame in range(2**14):
-        bytes = f.read(12)
+        bytes = infile.read(12)
         if not bytes: break
         if frame % 2 == 0:
             d, i = bytes[:8], bytes[8:]
@@ -24,8 +24,8 @@ def compile(pyfile, cfile, f):
     write_code(make_writer(cfile), insns)
 
 def make_writer(file):
-    def write(fmt, *args):
-        print >>file, fmt % args
+    def write(format, *args):
+        print >>file, format % args
     return write
 
 def write_data(out, data):
@@ -48,8 +48,8 @@ def write_code(out, insns):
     out('}')
 
 def compile1(out, pc, insn):
-    def assign(fmt, *args):
-        out('  M[%d] = (%s);', pc, fmt % args)
+    def assign(format, *args):
+        out('  M[%d] = (%s);', pc, format % args)
     op = field(insn, 31, 28)
     if op == 0:
         op = field(insn, 27, 24)
