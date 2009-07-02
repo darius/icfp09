@@ -16,10 +16,10 @@ def compile(pyfile, cfile, f):
         bytes = f.read(12)
         if not bytes: break
         if frame % 2 == 0:
-            d, i = bytes[:8], struct.unpack('<I', bytes[8:])[0]
+            d, i = bytes[:8], bytes[8:]
         else:
-            i, d = struct.unpack('<I', bytes[:4])[0], bytes[4:]
-        insns.append(i)
+            i, d = bytes[:4], bytes[4:]
+        insns.append(struct.unpack('<I', i)[0])
         data.append(d)
     write_data(pyfile)
     write_code(cfile)
