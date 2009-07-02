@@ -40,5 +40,6 @@ class CompiledVM:
 
     def actuate(self, actuator, value):
         value = float(value)
-        self.updated.add(actuator)
-        self.actuators[actuator] = value
+        if value != self.actuators[actuator]:
+            self.updated.add(actuator)
+            self.actuators[actuator] = value
