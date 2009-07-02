@@ -29,6 +29,8 @@ class CompiledVM:
             for a_id, value in acts:
                 write('<Id', a_id, value)
         write('<II', self.nsteps, 0)
+        if 3e6 < self.nsteps:
+            print 'WARNING: too many steps for a contest solution'
 
     def step(self):
         self.lib.step(self.data, self.sensors, self.actuators, self.status)
@@ -40,6 +42,6 @@ class CompiledVM:
 
     def actuate(self, actuator, value):
         value = float(value)
-        if value != self.actuators[actuator]:
+        if value != self.actuators[actuator] or self.nsteps == 0:
             self.updated.add(actuator)
             self.actuators[actuator] = value
