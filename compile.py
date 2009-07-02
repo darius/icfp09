@@ -41,37 +41,49 @@ def write_code(out, insns):
     out('         double *actuators,')
     out('         int *pstatus) {')
     out('  int status = *pstatus;')
+    # This compiler does one optimization of its own: it keeps only
+    # forward-referenced variables in the M array. The others become
+    # local variables in the C code.
+    local_vars = set()
+    state_vars = set()
     for pc, insn in enumerate(insns):
-        compile1(out, pc, insn)
+        compile1(out, pc, insn, local_vars, state_vars)
     out('  *pstatus = status;')
     out('  return 0;')
     out('}')
 
-def compile1(out, pc, insn):
+def compile1(out, pc, insn, local_vars, state_vars):
     def assign(format, *args):
-        out('  M[%d] = (%s);', pc, format % args)
+        if pc in state_vars:
+            out('  M[%d] = (%s);', pc, format % args)
+        else:
+            local_vars.add(pc)
+            out('  double v%d = (%s);', pc, format % args)
+    def M(v):
+        if pc <= v: state_vars.add(v)
+        return ('v%d' if v in local_vars else 'M[%d]') % v
     op = field(insn, 31, 28)
     if op == 0:
         op = field(insn, 27, 24)
         r1 = field(insn, 13, 0)
         def compile_cmp():
             relation = '< <= == >= >'.split()[field(insn, 23, 21)]
-            out('  status = (M[%d] %s 0.0);', r1, relation)
+            out('  status = (%s %s 0.0);', M(r1), relation)
         if   op == 0: pass
         elif op == 1: compile_cmp()
-        elif op == 2: assign('sqrt(M[%d])', r1)
-        elif op == 3: assign('M[%d]', r1)
+        elif op == 2: assign('sqrt(%s)', M(r1))
+        elif op == 3: assign('%s', M(r1))
         elif op == 4: assign('actuators[%d]', r1)
         else:         assert False
     else:
         r1 = field(insn, 27, 14)
         r2 = field(insn, 13, 0)
-        if   op == 1: assign('M[%d] + M[%d]', r1, r2)
-        elif op == 2: assign('M[%d] - M[%d]', r1, r2)
-        elif op == 3: assign('M[%d] * M[%d]', r1, r2)
-        elif op == 4: assign('M[%d] == 0.0 ? 0.0 : M[%d] / M[%d]', r2, r1, r2)
-        elif op == 5: out('  sensors[%d] = M[%d];', r1, r2)
-        elif op == 6: assign('status ? M[%d] : M[%d]', r1, r2)
+        if   op == 1: assign('%s + %s', M(r1), M(r2))
+        elif op == 2: assign('%s - %s', M(r1), M(r2))
+        elif op == 3: assign('%s * %s', M(r1), M(r2))
+        elif op == 4: assign('%s == 0.0 ? 0.0 : %s / %s', M(r2), M(r1), M(r2))
+        elif op == 5: out('  sensors[%d] = %s;', r1, M(r2))
+        elif op == 6: assign('status ? %s : %s', M(r1), M(r2))
         else:         assert False
 
 def field(u32, hi, lo):

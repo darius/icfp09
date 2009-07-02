@@ -1,6 +1,7 @@
 CFLAGS := -g2 -O2 -fPIC -fno-common
 
-all: libbin1.dylib libbin2.dylib
+all: libbin1.dylib libbin2.dylib libbin4.dylib
+#all: libbin1.dylib libbin2.dylib
 
 #	gcc -fPIC -shared -o libbin1.so bin1.o
 
@@ -22,3 +23,13 @@ bin2.c: compile.py
 
 clean:
 	rm -f *.o *.so
+
+
+libbin4.dylib: bin4.o
+	gcc -dynamiclib -undefined dynamic_lookup -single_module -o libbin4.dylib bin4.o
+
+bin4.o: bin4.c
+
+bin4.c: compile.py
+	python compile.py bin4
+
