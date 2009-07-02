@@ -3,17 +3,16 @@ import struct
 
 import bin1
 
-# XXX add code to make sure this is big enough
-SensorsArray   = ctypes.c_double * 50
-ActuatorsArray = ctypes.c_double * 16001 # XXX wasteful
+# These arrays go mostly unused. TODO: allocate only what's needed.
+DataArray      = ctypes.c_double * (2**14)
+SensorsArray   = ctypes.c_double * (2**14)
+ActuatorsArray = ctypes.c_double * (2**14)
 StatusArray    = ctypes.c_int * 1
-
 
 class CompiledVM:
 
     def __init__(self, bin_name, loud=False):
         data_module = __import__(bin_name)
-        DataArray   = ctypes.c_double * len(data_module.data)
         self.lib       = ctypes.CDLL('lib%s.dylib' % bin_name)
         self.data      = DataArray(*data_module.data)
         self.sensors   = SensorsArray()
