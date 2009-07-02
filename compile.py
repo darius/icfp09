@@ -45,8 +45,10 @@ def write_code(f, insns):
 def compile1(f, pc, insn):
     def assign(expr):
         print >>f, '  M[%d] = %s;' % (pc, expr)
-    if insn_kind(insn) == 'S':
-        op, r1 = decode_S(insn)
+    op = field(insn, 31, 28)
+    if op == 0:
+        op = field(insn, 27, 24)
+        r1 = field(insn, 13, 0)
         def compile_cmp():
             cmpi = field(insn, 23, 21)
             cmp = '< <= == >= >'.split()[cmpi]
@@ -55,10 +57,11 @@ def compile1(f, pc, insn):
         elif op == 1: compile_cmp()
         elif op == 2: assign('sqrt(M[%d])' % r1)
         elif op == 3: assign('M[%d]' % r1)
-        elif op == 4: assign(get_actuator(r1))
+        elif op == 4: assign('actuators[%d]' % r1)
         else:         assert False
     else:
-        op, r1, r2 = decode_D(insn)
+        r1 = field(insn, 27, 14)
+        r2 = field(insn, 13, 0)
         if   op == 1: assign('M[%d] + M[%d]' % (r1, r2))
         elif op == 2: assign('M[%d] - M[%d]' % (r1, r2))
         elif op == 3: assign('M[%d] * M[%d]' % (r1, r2))
@@ -67,18 +70,6 @@ def compile1(f, pc, insn):
         elif op == 5: print >>f, '  sensors[%d] = M[%d];' % (r1, r2)
         elif op == 6: assign('(status ? M[%d] : M[%d])' % (r1, r2))
         else:         assert False
-
-def get_actuator(r1):
-    return 'actuators[%d]' % r1
-
-def insn_kind(insn):
-    return 'S' if field(insn, 31, 28) == 0 else 'D'
-
-def decode_S(insn):
-    return field(insn, 27, 24), field(insn, 13, 0)
-
-def decode_D(insn):
-    return field(insn, 31, 28), field(insn, 27, 14), field(insn, 13, 0)
 
 def field(u32, hi, lo):
     return (u32 >> lo) & ((1 << (hi + 1 - lo)) - 1)
