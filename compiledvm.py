@@ -1,8 +1,6 @@
 import ctypes
 import struct
 
-import bin1
-
 # These arrays go mostly unused. TODO: allocate only what's needed.
 DataArray      = ctypes.c_double * (2**14)
 SensorsArray   = ctypes.c_double * (2**14)
