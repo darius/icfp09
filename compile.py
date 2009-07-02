@@ -8,10 +8,9 @@ def main():
             open(stem + '.c', 'w'),
             open(stem + '.obf', 'rb'))
 
-insns = []
-data = []
-
 def compile(pyfile, cfile, f):
+    insns = []
+    data = []
     for frame in range(2**14):
         bytes = f.read(12)
         if not bytes: break
@@ -21,15 +20,15 @@ def compile(pyfile, cfile, f):
             i, d = bytes[:4], bytes[4:]
         insns.append(struct.unpack('<I', i)[0])
         data.append(d)
-    write_data(pyfile)
-    write_code(cfile)
+    write_data(pyfile, data)
+    write_code(cfile, insns)
 
-def write_data(pyfile):
+def write_data(pyfile, data):
     print >>pyfile, 'import struct'
     print >>pyfile, 'def unpack(b): return struct.unpack("<d", b)[0]'
     print >>pyfile, 'data = map(unpack, %r)' % data
 
-def write_code(f):
+def write_code(f, insns):
     print >>f, '#include <math.h>'
     print >>f, ''
     print >>f, 'int step(double *M,'
