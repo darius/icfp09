@@ -140,7 +140,7 @@ def run_it(scenario):
 
     m.actuate(a_config, scenario)
     run()
-    m.write_trace(open('%d.osf' % scenario, 'wb'), team_id, scenario)
+    m.write_trace(open('osf/%d.osf' % scenario, 'wb'), team_id, scenario)
 
 
 if __name__ == '__main__':
