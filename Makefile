@@ -22,7 +22,7 @@ bin2.c: compile.py
 	python compile.py bin2
 
 clean:
-	rm -f *.o *.so *.dylib dbg
+	rm -f *.o *.so *.dylib dbg bin?.[co] bin?.py*
 
 
 libbin4.dylib: bin4.o

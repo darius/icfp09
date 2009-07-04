@@ -4,9 +4,9 @@ import sys
 def main():
     assert 2 == len(sys.argv)
     stem = sys.argv[1]
-    compile(open(stem + '.py', 'w'),
-            open(stem + '.c', 'w'),
-            open(stem + '.obf', 'rb'))
+    compile(open('%s.py' % stem, 'w'),
+            open('%s.c' % stem, 'w'),
+            open('obf/%s.obf' % stem, 'rb'))
 
 def compile(pyfile, cfile, infile):
     insns = []
