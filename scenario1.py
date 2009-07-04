@@ -12,7 +12,7 @@ def main():
 
 
 def run_it(scenario):
-    m = compiledvm.CompiledVM('bin1', loud=False)
+    m = compiledvm.CompiledVM('bin1')
     
     def run():
         set_dv((0.0, 0.0))

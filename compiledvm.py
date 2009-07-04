@@ -9,7 +9,7 @@ StatusArray    = ctypes.c_int * 1
 
 class CompiledVM:
 
-    def __init__(self, bin_name, loud=False):
+    def __init__(self, bin_name):
         data_module = __import__(bin_name)
         self.lib       = ctypes.CDLL('%s.dylib' % bin_name)
         self.data      = DataArray(*data_module.data)

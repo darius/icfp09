@@ -12,7 +12,7 @@ def main():
 
 
 def run_it(scenario):
-    m = compiledvm.CompiledVM('bin2', loud=False)
+    m = compiledvm.CompiledVM('bin2')
 
     def show():
         r = my_position()
