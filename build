@@ -1,0 +1,3 @@
+#!/bin/sh
+python makemake.py >Makefile
+make "$@"

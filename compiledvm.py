@@ -11,7 +11,7 @@ class CompiledVM:
 
     def __init__(self, bin_name, loud=False):
         data_module = __import__(bin_name)
-        self.lib       = ctypes.CDLL('lib%s.dylib' % bin_name)
+        self.lib       = ctypes.CDLL('%s.dylib' % bin_name)
         self.data      = DataArray(*data_module.data)
         self.sensors   = SensorsArray()
         self.actuators = ActuatorsArray()
