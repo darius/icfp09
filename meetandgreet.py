@@ -16,13 +16,13 @@ class MeetAndGreetProblem(problem.Problem):
 
         # Then wait for a launch window, and depart:
         dv_depart, t_coast, dv_arrive = self.calculate_burn()
-        while not self.propitious(omega, t_coast):
+        while not self.propitious(omega, int(t_coast)):
             self.stepv()
             if 50000 < self.m.nsteps:
                 report('Giving up')
                 return
         report('Departure burn')
-        self.burn(self.tangent(dv_depart, clockwise))
+        self.burn_tangent(dv_depart)
 
         # Coast until rendezvous time:
         fudge = 0 if self.scenario == 2002 else 16  # XXX cheating
@@ -41,12 +41,17 @@ class MeetAndGreetProblem(problem.Problem):
 
         # Coast for >900 steps for the VM to score us:
         self.coast(1000)
-        report('Final separation', magnitude(vsub(self.get_r(), self.get_t())))
+        report('Final separation',
+               magnitude(vsub(self.get_r(), self.get_t())))
 
     def coast(self, nsteps):
         self.set_dv(origin)
         for i in range(nsteps):
             self.stepv()
+
+    def burn_tangent(self, dspeed):
+        tangent = vdirection(self.get_v())
+        self.burn(vscale(dspeed, tangent))
 
     def burn(self, dv):
         self.set_dv(dv)
@@ -69,6 +74,11 @@ class MeetAndGreetProblem(problem.Problem):
         # It takes two burns to precisely match a position and
         # velocity. So we need (r0,v0) for our ship's state now, and
         # (rt,vt) for the target's state two time-steps from now:
+
+        def tangent_from(r, dv, clockwise):
+            theta = angle(vnegate(r)) + (pi/2 if clockwise else -pi/2)
+            return ((cos(theta) * dv, sin(theta) * dv))
+
         r0 = self.get_r()
         v0 = self.get_v()
         rt = rotate(self.get_t(), 2 * omega)
@@ -92,8 +102,8 @@ class MeetAndGreetProblem(problem.Problem):
         return angles_approx_equal(a, dest, one_degree * 4e-3)
 
     def extrapolate_target_angle(self, omega, T):
-        # angle of target after interval T
-        return angle(self.get_t()) + int(T) * omega
+        # Angle of target after interval T
+        return angle(self.get_t()) + T * omega
 
     def calculate_burn(self):
         return calculate_hohmann_transfer(magnitude(self.get_r()),
@@ -102,9 +112,6 @@ class MeetAndGreetProblem(problem.Problem):
     def get_theta(self):
         x, y = self.get_r()
         return atan2(-y, -x)
-
-    def tangent(self, dv, clockwise):
-        return tangent_from(self.get_r(), dv, clockwise)
 
     def get_t(self):
         return vadd(self.get_r(),
@@ -122,10 +129,6 @@ class MeetAndGreetProblem(problem.Problem):
         c = self.canvas
         c.draw_dot(self.get_r(), c.white)
         c.draw_dot(self.get_t(), c.green)
-
-def tangent_from(r, dv, clockwise):
-    theta = angle(vnegate(r)) + (pi/2 if clockwise else -pi/2)
-    return ((cos(theta) * dv, sin(theta) * dv))
 
 def report(*args):
     for arg in args:

@@ -22,8 +22,8 @@ class HohmannProblem(problem.Problem):
                                           self.get_r_target())
 
     def burn(self, dspeed):
-        v = self.get_v()
-        self.set_dv(vscale(dspeed / magnitude(v), v))
+        tangent = vdirection(self.get_v())
+        self.set_dv(vscale(dspeed, tangent))
         self.stepv()
 
     def stepv(self):

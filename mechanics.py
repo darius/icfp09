@@ -21,6 +21,8 @@ def vaverage(v0, v1):        return vscale(0.5, vadd(v0, v1))
 def dot((x0,y0), (x1,y1)):   return x0 * x1 + y0 * y1
 def cross((x0,y0), (x1,y1)): return x0 * y1 - x1 * y0
 
+def vdirection(v):           return vscale(1. / magnitude(v), v)
+
 def relative_angle(v0, v1):
     return atan2(cross(v0, v1), dot(v0, v1))
 
