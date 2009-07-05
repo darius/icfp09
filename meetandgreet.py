@@ -70,7 +70,7 @@ class MeetAndGreetProblem(problem.Problem):
         # velocity. So we need (r0,v0) for our ship's state now, and
         # (rt,vt) for the target's state two time-steps from now:
         r0 = self.get_r()
-        v0 = self.get_v(origin)
+        v0 = self.get_v()
         rt = rotate(self.get_t(), 2 * omega)
         speed = sqrt(GM / magnitude(self.get_t()))
         vt = tangent_from(rt, speed, clockwise)
@@ -78,8 +78,8 @@ class MeetAndGreetProblem(problem.Problem):
         report('vt', vt)
         return compute_rendezvous(r0, v0, rt, vt)
 
-    def get_v(self, prev_burn):
-        return infer_v(self.prev_r, prev_burn, self.get_r())
+    def get_v(self):
+        return infer_v(self.prev_r, self.prev_burn, self.get_r())
 
     def propitious(self, omega, t_coast):
         # omega: angular velocity of target

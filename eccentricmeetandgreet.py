@@ -5,6 +5,7 @@ class EccentricMeetAndGreetProblem(meetandgreet.MeetAndGreetProblem):
     bin_name = 'bin3'
 
     def run(self):
+        self.set_dv(origin)
         for i in range(500000):
             self.step()
 
@@ -12,10 +13,10 @@ class EccentricMeetAndGreetProblem(meetandgreet.MeetAndGreetProblem):
 
     def make_canvas(self):
         import canvas
-        prev_r = self.get_r()
+        self.prev_r = self.get_r()
         prev_t = self.get_t()
         self.step()
-        v = self.get_v(prev_r, origin)
+        v = self.get_v()
         vt = infer_v(prev_t, origin, self.get_t())
 
         def furthest(r0, v0):

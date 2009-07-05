@@ -32,6 +32,8 @@ class Problem:
         # step in a throwaway VM (so at least the positions of things
         # are available).
         p = self.__class__(self.scenario)
+        import mechanics
+        p.set_dv(mechanics.origin)
         p.step()
         self.canvas = p.make_canvas()
 
