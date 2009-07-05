@@ -25,8 +25,6 @@ class Canvas:
     def draw_dot(self, (x, y), color):
         x = int(self.rescale * x) + wscale
         y = int(self.rescale * y) + wscale
-        assert 0 <= x < wwidth
-        assert 0 <= y < wheight
         screen.set_at((x, y), color)
         global dotcount
         dotcount += 1
@@ -38,9 +36,6 @@ class Canvas:
         x = int(self.rescale * x) + wscale
         y = int(self.rescale * y) + wscale
         radius = int(self.rescale * radius)
-        assert 0 <= x < wwidth
-        assert 0 <= y < wheight
-        #assert 0 <= radius < 1.414213563 * wscale
         pygame.draw.circle(screen, color, (x, y), radius, width)
 
     def react(self):

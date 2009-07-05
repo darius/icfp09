@@ -28,11 +28,10 @@ class Problem:
 
     def set_up_canvas(self):
         # A good scale for our canvas, one that just shows everything
-        # in motion, depends on what's in the scenario. So first run
-        # two steps in a throwaway VM (two are needed to learn the
-        # velocities to go with the positions).
+        # in motion, depends on what's in the scenario. So first run a
+        # step in a throwaway VM (so at least the positions of things
+        # are available).
         p = self.__class__(self.scenario)
-        p.step()
         p.step()
         self.canvas = p.make_canvas()
 
