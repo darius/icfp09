@@ -45,7 +45,6 @@ class MeetAndGreetProblem(problem.Problem):
         # Coast for >900 steps for the VM to score us:
         self.set_dv((0., 0.))
         self.coast(1000)
-        self.telemetry()
         report('Final separation', magnitude(vsub(self.get_r(), self.get_t())))
 
     def coast(self, nsteps):
@@ -65,7 +64,7 @@ class MeetAndGreetProblem(problem.Problem):
     def telemetry(self):
         r = self.get_r()
         t = self.get_t()
-        report('%5d   %10.2f %10.f\n' % (self.m.nsteps, r[0], r[1]))
+        report('%5d   %10.2f %10.f' % (self.m.nsteps, r[0], r[1]))
         report('        %10.2f %10.2f' % (t[0]-r[0], t[1]-r[1]))
         report('        %10.2f %10.2f' % (t[0], t[1]))
 
