@@ -4,13 +4,63 @@ from sys import stderr
 from mechanics import *
 import problem
 
-def report(*args):
-    for arg in args:
-        print >>stderr, arg,
-    print >>stderr
-
 class MeetAndGreetProblem(problem.Problem):
     bin_name = 'bin2'
+
+    def run(self):
+        # First, learn the state of the universe from two successive steps.
+        self.set_dv((0., 0.))
+        self.stepv()
+        self.stepv()
+        clockwise = (cross(self.prev_r, self.get_r()) < 0)
+        # Angular velocity of target:
+        omega = relative_angle(self.prev_t, self.get_t()) 
+
+        # Then wait for a launch window, and depart:
+        dv, dv_prime, T = self.calculate_burn()
+        while not self.propitious(omega, T):
+            self.stepv()
+            if 50000 < self.m.nsteps:
+                report('Giving up')
+                return
+        report('Departure burn')
+        self.burn(self.tangent(dv, clockwise))
+
+        # Coast until rendezvous time:
+        self.set_dv((0., 0.))
+        fudge = 0 if self.scenario == 2002 else 16  # XXX cheating
+        self.coast(int(T) - fudge)
+
+        # Two burns to match position/velocity with the target:
+        B0, B1 = self.compute_insertion(clockwise, omega)
+        report('Insertion burns')
+        self.burn(B0)
+        self.burn(B1)
+        report('Inserted')
+        report('rt actual', self.get_t())
+        report('rv actual', infer_v(self.prev_t, (0.,0.), self.get_t()))
+        report('Initial separation',
+               magnitude(vsub(self.get_r(), self.get_t())))
+
+        # Coast for >900 steps for the VM to score us:
+        self.set_dv((0., 0.))
+        self.coast(1000)
+        self.telemetry()
+        report('Final separation', magnitude(vsub(self.get_r(), self.get_t())))
+
+    def coast(self, nsteps):
+        for i in range(nsteps):
+            self.stepv()
+
+    def burn(self, dv):
+        self.set_dv(dv)
+        self.stepv()
+
+    def stepv(self):
+        self.prev_r = self.get_r()
+        self.prev_t = self.get_t()
+        self.step()
+        self.telemetry()
 
     def telemetry(self):
         r = self.get_r()
@@ -19,60 +69,12 @@ class MeetAndGreetProblem(problem.Problem):
         report('        %10.2f %10.2f' % (t[0]-r[0], t[1]-r[1]))
         report('        %10.2f %10.2f' % (t[0], t[1]))
 
-    def run(self):
-        self.set_dv((0., 0.))
-        self.step()
+    def compute_insertion(self, clockwise, omega):
+        # It takes two burns to precisely match a position and
+        # velocity. So we need (r0,v0) for our ship's state now, and
+        # (rt,vt) for the target's state two time-steps from now:
         r0 = self.get_r()
-        t0 = self.get_t()
-        self.step()
-        r1 = self.get_r()
-        t1 = self.get_t()
-        clockwise = (cross(r0, r1) < 0)
-        omega = relative_angle(t0, t1) # angular velocity of target
-
-        dv, dv_prime, T = self.calculate_burn()
-        while not self.propitious(omega, T):
-            self.step()
-            self.telemetry()
-            if 50000 < self.m.nsteps:
-                report('Giving up')
-                return
-        prev_r = self.get_r()
-        self.burn(self.tangent(dv, clockwise))
-        report('Burned')
-        self.telemetry()
-
-        self.set_dv((0., 0.))
-        fudge = 0 if self.scenario == 2002 else 16  # XXX cheating
-        for i in range(int(T) - fudge):
-            prev_r = self.get_r()
-            next_target = rotate(self.get_t(), omega)
-            self.step()
-            self.telemetry()
-
-        B0, B1 = self.compute_insertion(clockwise, omega, prev_r)
-        report('Insertion burns')
-        self.burn(B0)
-        self.telemetry()
-        prev_t = self.get_t()
-        self.burn(B1)
-        self.telemetry()
-
-        report('Inserted')
-        report('rt actual', self.get_t())
-        report('rv actual', infer_v(prev_t, (0.,0.), self.get_t()))
-        self.telemetry()
-        report('Initial separation',
-               magnitude(vsub(self.get_r(), self.get_t())))
-
-        self.set_dv((0., 0.))
-        for i in range(1000): self.step()
-        self.telemetry()
-        report('Final separation', magnitude(vsub(self.get_r(), self.get_t())))
-
-    def compute_insertion(self, clockwise, omega, prev_r):
-        r0 = self.get_r()
-        v0 = self.get_v(prev_r, (0.,0.))
+        v0 = self.get_v((0.,0.))
         rt = rotate(self.get_t(), 2 * omega)
         speed = sqrt(GM / magnitude(self.get_t()))
         vt = tangent_from(rt, speed, clockwise)
@@ -80,8 +82,8 @@ class MeetAndGreetProblem(problem.Problem):
         report('vt', vt)
         return compute_rendezvous(r0, v0, rt, vt)
 
-    def get_v(self, prev_r, prev_burn):
-        return infer_v(prev_r, prev_burn, self.get_r())
+    def get_v(self, prev_burn):
+        return infer_v(self.prev_r, prev_burn, self.get_r())
 
     def propitious(self, omega, T):
         # omega: angular velocity of target
@@ -100,10 +102,6 @@ class MeetAndGreetProblem(problem.Problem):
     def calculate_burn(self):
         return calculate_hohmann_transfer(magnitude(self.get_r()),
                                           magnitude(self.get_t()))
-
-    def burn(self, dv):
-        self.set_dv(dv)
-        self.step()
 
     def get_theta(self):
         x, y = self.get_r()
@@ -132,3 +130,8 @@ class MeetAndGreetProblem(problem.Problem):
 def tangent_from(r, dv, clockwise):
     theta = angle(vnegate(r)) + (pi/2 if clockwise else -pi/2)
     return ((cos(theta) * dv, sin(theta) * dv))
+
+def report(*args):
+    for arg in args:
+        print >>stderr, arg,
+    print >>stderr
