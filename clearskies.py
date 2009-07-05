@@ -31,7 +31,9 @@ class ClearSkiesProblem(problem.Problem):
         rs = [self.get_r(), self.get_r_station(), self.get_r_moon()]
         rs += map(self.get_r_target, range(11))
         scale = max(map(magnitude, rs))
-        return canvas.Canvas(1.05 * scale)
+        c = canvas.Canvas(1.05 * scale)
+        c.draw_circle(origin, r_earth, c.blue, 0)
+        return c
 
     def show(self):
         c = self.canvas

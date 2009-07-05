@@ -42,6 +42,7 @@ class HohmannProblem(problem.Problem):
         import canvas
         scale = max(magnitude(self.get_r()), self.get_r_target())
         c = canvas.Canvas(1.05 * scale)
+        c.draw_circle(origin, r_earth, c.blue, 0)
         c.draw_circle(origin, self.get_r_target(), c.green)
         return c
 

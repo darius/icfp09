@@ -1,5 +1,6 @@
 from math import acos, atan2, cos, hypot, pi, sin, sqrt
 
+r_earth = 6.357e6
 GM = 6.67428e-11 * 6.0e24
 
 one_degree = pi / 180.0

@@ -26,4 +26,6 @@ class EccentricMeetAndGreetProblem(meetandgreet.MeetAndGreetProblem):
 
         scale = max(furthest(self.get_r(), v),
                     furthest(self.get_t(), vt))
-        return canvas.Canvas(1.05 * scale)
+        c = canvas.Canvas(1.05 * scale)
+        c.draw_circle(origin, r_earth, c.blue, 0)
+        return c

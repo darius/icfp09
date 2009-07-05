@@ -123,7 +123,9 @@ class MeetAndGreetProblem(problem.Problem):
         import canvas
         scale = max(magnitude(self.get_r()),
                     magnitude(self.get_t()))
-        return canvas.Canvas(1.1 * scale)
+        c = canvas.Canvas(1.1 * scale)
+        c.draw_circle(origin, r_earth, c.blue, 0)
+        return c
 
     def show(self):
         c = self.canvas
