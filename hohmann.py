@@ -7,9 +7,9 @@ class HohmannProblem(problem.Problem):
     def run(self):
         self.coast(2)
         dv_depart, t_coast, dv_arrive = self.calculate_burn()
-        self.burn(dv_depart)
+        self.burn_tangent(dv_depart)
         self.coast(int(t_coast))
-        self.burn(dv_arrive)
+        self.burn_tangent(dv_arrive)
         self.coast(901)
 
     def coast(self, nsteps):
@@ -21,7 +21,7 @@ class HohmannProblem(problem.Problem):
         return calculate_hohmann_transfer(magnitude(self.get_r()),
                                           self.get_r_target())
 
-    def burn(self, dspeed):
+    def burn_tangent(self, dspeed):
         tangent = vdirection(self.get_v())
         self.set_dv(vscale(dspeed, tangent))
         self.stepv()
