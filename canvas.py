@@ -48,10 +48,10 @@ class Canvas:
             self.react_to(event)
 
     def hold(self):
+        pygame.display.flip()
         while True:
             self.react_to(pygame.event.wait())
 
     def react_to(self, event):
         if event.type == pygame.QUIT:
             sys.exit(0)
-        
