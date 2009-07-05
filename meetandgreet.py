@@ -40,7 +40,7 @@ class MeetAndGreetProblem(problem.Problem):
                magnitude(vsub(self.get_r(), self.get_t())))
 
         # Coast for >900 steps for the VM to score us:
-        self.coast(1000)
+        self.coast(901)
         report('Final separation',
                magnitude(vsub(self.get_r(), self.get_t())))
 

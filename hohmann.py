@@ -10,7 +10,7 @@ class HohmannProblem(problem.Problem):
         self.burn(dv_depart)
         self.coast(int(t_coast))
         self.burn(dv_arrive)
-        self.coast(1000)
+        self.coast(901)
 
     def coast(self, nsteps):
         self.set_dv(origin)
