@@ -9,9 +9,7 @@ class MeetAndGreetProblem(problem.Problem):
 
     def run(self):
         # First, learn the state of the universe from two successive steps.
-        self.set_dv((0., 0.))
-        self.stepv()
-        self.stepv()
+        self.coast(2)
         clockwise = (cross(self.prev_r, self.get_r()) < 0)
         # Angular velocity of target:
         omega = relative_angle(self.prev_t, self.get_t()) 
@@ -27,7 +25,6 @@ class MeetAndGreetProblem(problem.Problem):
         self.burn(self.tangent(dv, clockwise))
 
         # Coast until rendezvous time:
-        self.set_dv((0., 0.))
         fudge = 0 if self.scenario == 2002 else 16  # XXX cheating
         self.coast(int(T) - fudge)
 
@@ -43,11 +40,11 @@ class MeetAndGreetProblem(problem.Problem):
                magnitude(vsub(self.get_r(), self.get_t())))
 
         # Coast for >900 steps for the VM to score us:
-        self.set_dv((0., 0.))
         self.coast(1000)
         report('Final separation', magnitude(vsub(self.get_r(), self.get_t())))
 
     def coast(self, nsteps):
+        self.set_dv((0., 0.))
         for i in range(nsteps):
             self.stepv()
 

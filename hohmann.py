@@ -7,23 +7,23 @@ class HohmannProblem(problem.Problem):
     bin_name = 'bin1'
 
     def run(self):
-        self.set_dv((0.0, 0.0))
-        self.step()
-        r0 = self.get_r()
-        self.step()
-        r1 = self.get_r()
-        clockwise = (cross(vnegate(r0), vnegate(r1)) < 0)
+        self.coast(2)
+        clockwise = (cross(self.prev_r, self.get_r()) < 0)
         dv, dv_prime, t = self.calculate_burn()
 
         self.burn(dv, clockwise)
-        self.set_dv((0.0, 0.0))
-
-        for i in range(int(t)): self.step()
-
+        self.coast(int(t))
         self.burn(dv_prime, clockwise)
-        self.set_dv((0.0, 0.0))
+        self.coast(1000)
 
-        for i in range(1000): self.step()
+    def coast(self, nsteps):
+        self.set_dv((0.0, 0.0))
+        for i in range(nsteps):
+            self.stepv()
+
+    def stepv(self):
+        self.prev_r = self.get_r()
+        self.step()
 
     def calculate_burn(self):
         return calculate_hohmann_transfer(magnitude(self.get_r()),
