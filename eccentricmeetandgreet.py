@@ -15,8 +15,8 @@ class EccentricMeetAndGreetProblem(meetandgreet.MeetAndGreetProblem):
         prev_r = self.get_r()
         prev_t = self.get_t()
         self.step()
-        v = self.get_v(prev_r, (0.,0.))
-        vt = infer_v(prev_t, (0.,0.), self.get_t())
+        v = self.get_v(prev_r, origin)
+        vt = infer_v(prev_t, origin, self.get_t())
 
         def furthest(r0, v0):
             r = magnitude(r0)

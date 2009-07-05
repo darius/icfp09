@@ -67,5 +67,6 @@ class Problem:
 
     # And so does this actuator:
     def set_dv(self, (dvx, dvy)):
+        self.prev_burn = (dvx, dvy)
         self.m.actuate(0x2, dvx)
         self.m.actuate(0x3, dvy)

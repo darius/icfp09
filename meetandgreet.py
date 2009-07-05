@@ -15,18 +15,18 @@ class MeetAndGreetProblem(problem.Problem):
         omega = relative_angle(self.prev_t, self.get_t()) 
 
         # Then wait for a launch window, and depart:
-        dv, dv_prime, T = self.calculate_burn()
-        while not self.propitious(omega, T):
+        dv_depart, t_coast, dv_arrive = self.calculate_burn()
+        while not self.propitious(omega, t_coast):
             self.stepv()
             if 50000 < self.m.nsteps:
                 report('Giving up')
                 return
         report('Departure burn')
-        self.burn(self.tangent(dv, clockwise))
+        self.burn(self.tangent(dv_depart, clockwise))
 
         # Coast until rendezvous time:
         fudge = 0 if self.scenario == 2002 else 16  # XXX cheating
-        self.coast(int(T) - fudge)
+        self.coast(int(t_coast) - fudge)
 
         # Two burns to match position/velocity with the target:
         B0, B1 = self.compute_insertion(clockwise, omega)
@@ -35,7 +35,7 @@ class MeetAndGreetProblem(problem.Problem):
         self.burn(B1)
         report('Inserted')
         report('rt actual', self.get_t())
-        report('rv actual', infer_v(self.prev_t, (0.,0.), self.get_t()))
+        report('rv actual', infer_v(self.prev_t, origin, self.get_t()))
         report('Initial separation',
                magnitude(vsub(self.get_r(), self.get_t())))
 
@@ -44,7 +44,7 @@ class MeetAndGreetProblem(problem.Problem):
         report('Final separation', magnitude(vsub(self.get_r(), self.get_t())))
 
     def coast(self, nsteps):
-        self.set_dv((0., 0.))
+        self.set_dv(origin)
         for i in range(nsteps):
             self.stepv()
 
@@ -70,7 +70,7 @@ class MeetAndGreetProblem(problem.Problem):
         # velocity. So we need (r0,v0) for our ship's state now, and
         # (rt,vt) for the target's state two time-steps from now:
         r0 = self.get_r()
-        v0 = self.get_v((0.,0.))
+        v0 = self.get_v(origin)
         rt = rotate(self.get_t(), 2 * omega)
         speed = sqrt(GM / magnitude(self.get_t()))
         vt = tangent_from(rt, speed, clockwise)
@@ -81,13 +81,13 @@ class MeetAndGreetProblem(problem.Problem):
     def get_v(self, prev_burn):
         return infer_v(self.prev_r, prev_burn, self.get_r())
 
-    def propitious(self, omega, T):
+    def propitious(self, omega, t_coast):
         # omega: angular velocity of target
-        # T: transit time to target orbit
-        # Return true iff, T seconds from now, the target will
+        # t_coast: transit time to target orbit
+        # Return true iff, t_coast seconds from now, the target will
         # be approximately 180 degrees from our current angle.
         # (That's our launch window.)
-        a = self.extrapolate_target_angle(omega, T)
+        a = self.extrapolate_target_angle(omega, t_coast)
         dest = angle(self.get_r()) + pi
         return angles_approx_equal(a, dest, one_degree * 4e-3)
 

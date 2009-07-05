@@ -5,6 +5,8 @@ GM = 6.67428e-11 * 6.0e24
 one_degree = pi / 180.0
 
 
+origin = (0., 0.)
+
 def magnitude((x, y)):       return hypot(x, y)
 def angle((x, y)):           return atan2(y, x)
 
@@ -40,11 +42,10 @@ def range_reduce(a):
 
 
 def calculate_hohmann_transfer(r1, r2):
-    dv       = sqrt(GM / r1) * (sqrt(2 * r2 / (r1 + r2)) - 1)
-    dv_prime = sqrt(GM / r2) * (1 - sqrt(2 * r1 / (r1 + r2)))
-    t        = pi * (r1 + r2) * sqrt((r1 + r2) / (8*GM))
-    return dv, dv_prime, t
-
+    dv_depart = sqrt(GM / r1) * (sqrt(2 * r2 / (r1 + r2)) - 1)
+    dv_arrive = sqrt(GM / r2) * (1 - sqrt(2 * r1 / (r1 + r2)))
+    t_coast   = pi * (r1 + r2) * sqrt((r1 + r2) / (8*GM))
+    return dv_depart, t_coast, dv_arrive
 
 def compute_rendezvous(r0, v0, rt, vt):
     """Compute two successive burns that take us from the state

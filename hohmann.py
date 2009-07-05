@@ -1,5 +1,3 @@
-from math import atan2, cos, pi, sin
-
 from mechanics import *
 import problem
 
@@ -8,45 +6,43 @@ class HohmannProblem(problem.Problem):
 
     def run(self):
         self.coast(2)
-        clockwise = (cross(self.prev_r, self.get_r()) < 0)
-        dv, dv_prime, t = self.calculate_burn()
-
-        self.burn(dv, clockwise)
-        self.coast(int(t))
-        self.burn(dv_prime, clockwise)
+        dv_depart, t_coast, dv_arrive = self.calculate_burn()
+        self.burn(dv_depart)
+        self.coast(int(t_coast))
+        self.burn(dv_arrive)
         self.coast(1000)
 
     def coast(self, nsteps):
-        self.set_dv((0.0, 0.0))
+        self.set_dv(origin)
         for i in range(nsteps):
             self.stepv()
-
-    def stepv(self):
-        self.prev_r = self.get_r()
-        self.step()
 
     def calculate_burn(self):
         return calculate_hohmann_transfer(magnitude(self.get_r()),
                                           self.get_r_target())
 
-    def burn(self, dv, clockwise):
-        theta = self.get_theta() + (pi/2 if clockwise else -pi/2)
-        self.set_dv((cos(theta) * dv, sin(theta) * dv))
+    def burn(self, dspeed):
+        v = self.get_v()
+        self.set_dv(vscale(dspeed / magnitude(v), v))
+        self.stepv()
+
+    def stepv(self):
+        self.prev_r = self.get_r()
         self.step()
 
-    def get_theta(self):
-        x, y = self.get_r()
-        return atan2(-y, -x)
+    def get_v(self):
+        return infer_v(self.prev_r, self.prev_burn, self.get_r())
 
-    def get_r_target(self): return self.m.sensors[4]
+    def get_r_target(self):
+        return self.m.sensors[4]
 
     view_update_period = 10
 
     def make_canvas(self):
         import canvas
         scale = max(magnitude(self.get_r()), self.get_r_target())
-        c = canvas.Canvas(1.1 * scale)
-        c.draw_circle((0, 0), self.get_r_target(), c.green)
+        c = canvas.Canvas(1.05 * scale)
+        c.draw_circle(origin, self.get_r_target(), c.green)
         return c
 
     def show(self):
