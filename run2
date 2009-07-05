@@ -1,8 +1,0 @@
-#!/bin/sh
-mkdir -p osf  # Since git apparently won't track empty directories
-for s in 2001 2002 2003 2004
-do
-        echo Scenario $s
-        python scenario2.py $s >dbg
-        grep Score dbg
-done

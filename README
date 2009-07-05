@@ -1,6 +1,19 @@
-Run ./build, run1, and run2. Currently only works on OS X, because the
-dynamic-library building in the (generated) Makefile is OS-specific.
+Run
 
-The scenario1 code is translated from a C version by Edward Kmett and
-me. This has evolved since the contest finished: I replaced the VM
-interpreter with a compiler and tidied the code some.
+  $ ./build
+  $ ./runall 2>dbg
+
+The resulting trace files end up in osf/. Currently this only works
+on OS X, because dynamic libraries are built in an OS-specific way
+(see makemake.py).
+
+You can watch what's happening if you install pygame. Then run, e.g.,
+
+  $ python review.py osf/2004.osf
+
+(It assumes a screen-size of at least 1000x1000.) Or you can watch a
+run while it's still being computed, by passing watching=True to the
+problem constructor (from run.py).
+
+hohmann.py and its associated mechanics code derives from a C version
+by Edward Kmett and me. This has evolved since the contest finished.
