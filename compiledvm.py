@@ -1,5 +1,6 @@
 import ctypes
-import struct
+
+import osf
 
 # These arrays go mostly unused. TODO: allocate only what's needed.
 DataArray      = ctypes.c_double * (2**14)
@@ -21,16 +22,7 @@ class CompiledVM:
         self.trace     = []
 
     def write_trace(self, trace_file, team_id, scenario):
-        def write(*args):
-            trace_file.write(struct.pack(*args))
-        write('<III', 0xCAFEBABE, team_id, scenario)
-        for step, acts in self.trace:
-            write('<II', step, len(acts))
-            for a_id, value in acts:
-                write('<Id', a_id, value)
-        write('<II', self.nsteps, 0)
-        if 3e6 < self.nsteps:
-            print 'WARNING: too many steps for a contest solution'
+        osf.dump(trace_file, team_id, scenario, self.trace, self.nsteps)
 
     def step(self):
         self.lib.step(self.data, self.sensors, self.actuators, self.status)
