@@ -1,9 +1,12 @@
 import struct
-import sys
+
+import clop
 
 def main():
-    assert 2 == len(sys.argv)
-    stem = sys.argv[1]
+    options = clop.parse('stem')
+    compile_stem(options.stem)
+
+def compile_stem(stem):
     compile(open('%s.py' % stem, 'w'),
             open('%s.c' % stem, 'w'),
             open('obf/%s.obf' % stem, 'rb'))
